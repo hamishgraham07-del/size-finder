@@ -1,0 +1,26 @@
+{
+  "name": "Size Finder",
+  "short_name": "Size Finder",
+  "description": "Your size in each brand, and your clothes on your figure.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#f6f5f1",
+  "background_color": "#f6f5f1",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
