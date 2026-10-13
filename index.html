@@ -13928,7 +13928,7 @@ const PIECES = [
   { id: 'camo-cap', slot: 'hat', kind: 'cap', name: 'Camo cap', colors: ['#b9b5b0', '#9d9892', '#f3f2f2'], design: 'art-cap-bark', shape: { shape: 'soft' } },
   { id: 'snakehole-hoodie', slot: 'top', kind: 'hoodie', brand: 'Snakehole', name: 'Hoodie', size: 'M', chart: 'Snake Hole Scrap Hood Fleece', colors: ['#d4cebf', '#2e2b28'], design: 'outer-hoodie-centre', shape: { cords: false } },
   { id: 'snakehole-vest', slot: 'layer', kind: 'vest', brand: 'Snakehole', name: 'Reversible vest', size: 'S', colors: ['#1c1c1c', '#414140', '#cbcbce'], design: 'outer-vest-panelled', measured: { chest: 55, length: 67, shoulder: 14 }, was: ['Vest'] },
-  { id: 'turtle-co-shorts', slot: 'bottom', kind: 'shorts', brand: 'Turtle Co', name: 'Cargo shorts', size: 'M', colors: ['#372726', '#eae7f0', '#3c3470'], design: 'bottoms-cargo-mark', shape: { leg: { hem: 27 }, outseam: 40, rise: 31, waistWidth: 39, waist: 'elastic', pockets: ['cargoflat', 'square'] }, was: ['Shorts'] },
+  { id: 'turtle-co-shorts', slot: 'bottom', kind: 'shorts', brand: 'Turtle Co', name: 'Cargo shorts', size: 'M', colors: ['#372726', '#eae7f0', '#3c3470'], design: 'bottoms-cargo-mark', shape: { leg: { hem: 30 }, outseam: 46, rise: 31, waistWidth: 39, waist: 'elastic', pockets: ['cargoflat', 'square'] }, was: ['Shorts'] },      // (he says they sit slightly above his knee: outseam 46 puts the hem about 54 cm up; it was 40)
   { id: 'alfreds-tee', slot: 'top', kind: 'tee', brand: 'Alfred\'s Apartment', name: 'Trusted Tee, white', size: 'M', chart: 'Alfred\'s Apartment Trusted Tee', colors: ['#f3f3f1'], was: ['Boxy tee, white', 'T-shirt'] },
   { id: 'alfreds-button-up', slot: 'top', kind: 'shirt', brand: 'Alfred\'s Apartment', name: 'Vintage Button Down, black', size: 'S', chart: 'Alfred\'s Apartment Vintage Button Down', colors: ['#141213'], shape: { collar: 'camp' }, was: ['Button up', 'Camp-collar shirt, black'] },
   { id: 'thrills-jorts', slot: 'bottom', kind: 'shorts', brand: 'Thrills', name: 'Big Slacker jorts', size: '32', colors: ['#91aac6'], design: 'bottoms-faded', shape: { leg: { hem: 31.8 }, inseam: 27.9, rise: 29.2, pockets: ['hammer'], stitch: '#a9bdd6', metal: '#c9cdd2' }, was: ['Slacker jorts', 'Jorts'] },
@@ -14101,7 +14101,7 @@ const cleanSeeded = v => (Array.isArray(v) ? v : []).filter((x, i, a) => typeof 
 let seeded = cleanSeeded(load('sf.seeded', [])), seedNew = false;      // seedNew: the built-in pieces changed the list just now, so it is saved once the page is drawn
 // Which built-in wardrobe this browser has had (sf.seedv): 1 the first starting list of 21 (or nothing yet), 2 your whole wardrobe, 3 your wardrobe less the three rows that
 // were never yours (MOVED). Each step happens once (below).
-const cleanSeedv = v => v === 3 ? 3 : v === 2 ? 2 : 1;
+const cleanSeedv = v => v === 4 ? 4 : v === 3 ? 3 : v === 2 ? 2 : 1;
 let seedv = cleanSeedv(load('sf.seedv', 1));
 // Which of the pieces to try that come with this page this browser has had (sf.tries). triesNew: some went in just now.
 const cleanTried = v => (Array.isArray(v) ? v : []).filter((x, i, a) => typeof x === 'string' && a.indexOf(x) === i && TRIES.some(t => t.id === x));
@@ -14162,6 +14162,12 @@ const withPieces = list => {
     list = list.filter(o => !untouched(o));
     MOVED_IDS.forEach(id => { if (!seeded.includes(id)) seeded = seeded.concat(id); });
     seedv = 3; seedNew = true;
+  }
+  if (seedv < 4) {
+    // (13 Oct 2026, evening) the cargo shorts sit slightly above his knee: their length and leg opening are corrected where the row still holds the numbers it was given
+    list = list.map(o => o.id === 'turtle-co-shorts' && o.shape && o.shape.outseam === 40 && o.shape.leg && o.shape.leg.hem === 27
+      ? Object.assign({}, o, { shape: Object.assign({}, o.shape, { leg: Object.assign({}, o.shape.leg, { hem: 30 }), outseam: 46 }) }) : o);
+    seedv = 4; seedNew = true;
   }
   return list;
 };
