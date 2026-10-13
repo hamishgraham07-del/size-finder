@@ -91,10 +91,35 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
   #tryPick:empty { display: none; }
   .sub-h { font-size: 13px; line-height: 1.4; font-weight: 600; margin: 0 0 8px; }
   .panel { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-  tr.joined > td { border-bottom: 0; }
-  tr.under > td { padding-top: 0; }
-  #results tbody.brand:last-child > tr.under > td { border-bottom: 0; }
-  #results tbody[hidden] { display: none; }
+  /* Sizes: one short entry for each brand, its name and your sizes in it. A brand opens in place to its charts, each with its size, its note, how sure, and why. */
+  .sz-brand { border-top: 1px solid var(--line); }
+  .sz-brand[hidden] { display: none; }
+  .sz-brand > summary { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr) auto; align-items: center; gap: 4px 16px; padding: 11px 4px; border-radius: 8px; cursor: pointer; list-style: none; }
+  .sz-brand > summary::-webkit-details-marker { display: none; }
+  .sz-brand > summary:hover .sz-b-name { text-decoration: underline; text-underline-offset: 3px; }
+  .sz-b-name { font-size: 15px; line-height: 1.3; font-weight: 600; overflow-wrap: anywhere; }
+  .sz-b-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; min-width: 0; }
+  .sz-chip { display: inline-flex; align-items: center; gap: 7px; min-width: 0; font-size: 13px; line-height: 1.3; color: var(--muted); }
+  .sz-chip .size { flex: none; font-size: 15px; }
+  .sz-own { white-space: nowrap; }
+  .sz-own::before { content: "\00b7"; margin: 0 6px; }      /* (a quiet word after the kinds: "tees · you own S") */
+  .sz-cue { flex: none; width: 8px; height: 8px; margin: -4px 6px 0 4px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(45deg); }
+  .sz-brand[open] > summary .sz-cue { margin-top: 4px; transform: rotate(225deg); }
+  .sz-charts { padding: 0 4px 10px; }
+  .sz-chart { padding: 9px 0 6px 14px; border-top: 1px dashed var(--line); }
+  .sz-c-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; }
+  .sz-c-name { font-weight: 500; overflow-wrap: anywhere; }
+  .sz-c-name button.ghost { margin-left: 8px; }
+  .sz-chart > .note { margin: 3px 0 0; }
+  .sz-chart > .note:empty { display: none; }
+  .sz-rest { margin: 14px 4px 6px; font-size: 12px; color: var(--muted); }
+  .sz-rest[hidden] { display: none; }
+  /* the form for a new chart: put away until "Add a brand" is pressed */
+  .sz-add { margin: 0 0 14px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .sz-add .sub-h { margin: 0 0 10px; }
+  .sz-add-go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 10px; }
+  .sz-add-go button.ghost { padding: 8px 14px; font-size: inherit; }
+  #sizeMsg { margin: 0 0 10px; }
   /* a section that starts closed: its heading is the button that opens it */
   .fold > summary { display: block; cursor: pointer; list-style: none; border-radius: 6px; }
   .fold > summary::-webkit-details-marker { display: none; }
@@ -118,16 +143,11 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
   .says li + li { margin-top: 5px; }
   .says b { font-weight: 600; color: var(--ink); }
   #prefs input.unused { color: var(--muted); border-style: dashed; }      /* a typed number that is not the one in use */
-  /* a narrow screen: each brand is a block of its own. Name and size on one line, the note under them across the whole width, then the reason */
+  /* a narrow window: a brand's name on a line of its own, its sizes under it */
   @media (max-width: 560px) {
-    #results, #results tbody, #results tr.under, #results tr.under > td { display: block; }
-    #results tbody[hidden] { display: none; }
-    #results thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-    #results tr.head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-    #results tr.joined { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
-    #results tr.joined > td { display: block; }
-    #results tr.joined > td.note { grid-column: 1 / -1; padding-top: 0; }
-    #results tr.joined > td.note:empty { display: none; }
+    .sz-brand > summary { grid-template-columns: minmax(0, 1fr) auto; }
+    .sz-b-sum { grid-column: 1 / -1; grid-row: 2; }
+    .sz-cue { grid-column: 2; grid-row: 1; }
   }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
   .row > div { flex: 1 1 150px; }
@@ -171,6 +191,9 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
     .outfit-fig > #outfitFigure { width: auto; }
     .outfit-fig > .of-view { margin: 8px auto 0; }
     .outfit-fig > .hint { display: block; margin-top: 10px; }
+    /* (in a short window, a phone on its side for one, the drawing is no taller than the room under the tabs, less Front and Back and the line about scale, so the
+       whole figure stays in sight down to its shoes; it is drawn smaller in the middle of its column) */
+    .outfit-fig > #outfitFigure > .av-svg { max-height: max(170px, calc(100vh - var(--tabs-h) - 114px)); max-height: max(170px, calc(100dvh - var(--tabs-h) - 114px)); }
   }
   #outfitMsg { margin: -6px 0 14px; }
   #outfitMsg:empty { display: none; }
@@ -237,18 +260,27 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
     .tabs [role="tab"]:focus-visible { outline-offset: -3px; }
     .tab-i { display: block; flex: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
     .tabs [role="tab"][aria-selected="true"] .tab-i { stroke-width: 1.9; }
-    /* Sizes: one card for each brand, the size large, and the reason opening in place under it */
+    /* Sizes: one card for each brand, its name and then your sizes in it, large; it opens in place to its charts */
     #secSizes, #secOutfit, #secWardrobe { margin-bottom: 12px; padding: 0; border: 0; border-radius: 0; background: none; }
     #secSizes > .h-row, #secWardrobe > .h-row { margin: 0 2px 10px; }
     #secWardrobe > p.note { margin-left: 2px; margin-right: 2px; }
-    #results tbody.brand { display: block; margin: 0 0 10px; padding: 12px 14px 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
-    #results tbody.brand > tr.joined { column-gap: 12px; align-items: center; }
-    #results tbody.brand td { padding: 0; border: 0; }
-    #results tbody.brand > tr.joined > td:first-child { font-size: 17px; line-height: 1.3; font-weight: 600; overflow-wrap: anywhere; }
-    #results tbody.brand > tr.joined > td:first-child .tag { margin-left: 8px; font-weight: 400; }
-    #results tbody.brand > tr.joined > td:first-child button.ghost { display: flex; margin-top: 8px; }
-    #results tbody.brand > tr.joined > td.note { padding-top: 6px; font-size: 15px; }
-    #results tbody.brand > tr.under > td { padding-top: 6px; }
+    .sz-brand { margin: 0 0 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+    .sz-brand > summary { gap: 9px 12px; min-height: 44px; padding: 13px 14px; border-radius: 14px; }
+    .sz-b-name { font-size: 17px; }
+    .sz-b-sum { gap: 8px 18px; }
+    .sz-cue { width: 9px; height: 9px; margin-right: 4px; }
+    .sz-chip { gap: 8px; font-size: 15px; }
+    .sz-chip .size { min-width: 50px; padding: 3px 12px; font-size: 20px; }
+    .sz-charts { padding: 0 14px 6px; }
+    .sz-chart { padding: 12px 0 8px; }
+    .sz-c-name { font-size: 16px; font-weight: 600; }
+    .sz-c-name .tag { margin-left: 8px; font-weight: 400; }
+    .sz-c-name button.ghost { display: flex; margin: 8px 0 0; }
+    .sz-chart > .note { margin-top: 6px; font-size: 15px; }
+    .sz-rest { margin: 16px 2px 8px; font-size: 15px; }
+    .sz-add { border-radius: 14px; }
+    .sz-add textarea { min-height: 120px; }
+    .sz-add-go { display: grid; }
     .size { min-width: 60px; padding: 5px 14px; font-size: 22px; line-height: 1.2; font-variant-numeric: tabular-nums; }
     /* (the parts of the page that bring their own styles are written after these, so each rule for them starts from main to count for more) */
     main .sx-x, main .sx-x .sx-t th, main .sx-x .sx-t td, main .sx-x .sx-t thead th, main .sx-chip, main .sx-why, main .sx-h, main .sx-pill, main .sx-lab { font-size: 15px; }
@@ -293,6 +325,8 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
     .outfit-fig > .of-view button { justify-content: center; min-width: 68px; min-height: 44px; padding: 3px 12px; border-radius: 13px; font-size: 15px; }
     .fig-save { position: absolute; right: max(12px, var(--safe-r)); bottom: 10px; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 4px 18px; border-radius: 999px; font-size: 15px; font-weight: 600; }
     @media (max-height: 520px) { .outfit-fig { position: static; } }
+    /* (while the figure is held in sight, "Save look" on it is the one button that saves: the playground's own "Save this look", further down, is put away) */
+    @media (min-height: 521px) { #outfitBox .of-acts > .of-save { display: none; } }
   }
 </style>
 <!-- avatar:css -->
@@ -708,7 +742,7 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
   .wd-fold-s:hover .wd-cue { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
   .wd-fold:not([open]) > .wd-fold-s { padding-bottom: 0; }
 
-  .wd-row, .wd-cols { display: grid; grid-template-columns: 30px minmax(0, 1fr) 56px 190px 64px; column-gap: 10px; align-items: center; margin: 0; }
+  .wd-row, .wd-cols { display: grid; grid-template-columns: 30px minmax(0, 1fr) 104px 190px 64px; column-gap: 10px; align-items: center; margin: 0; }
   .wd-cols { padding: 0 0 4px; font-size: 12px; line-height: 1.4; color: var(--muted); }
   /* the first line of a piece is its star, name, size, chart and Remove; whatever it has under that (how it fits, its colour, the panel that edits it) takes a line each */
   .wd-row { row-gap: 7px; padding: 10px 0 11px; border-top: 1px solid var(--line); }
@@ -787,6 +821,15 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
   .wd-ed .wd-btn { height: 32px; }
   .wd-size { display: inline-block; min-width: 38px; max-width: 100%; padding: 1px 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--card);
     font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+
+  /* a probable size, where none is written down: said as a guess, with Yes and Change under it */
+  .wd-c-guess { display: grid; justify-items: start; gap: 2px; font-size: 13px; line-height: 1.35; }
+  .wd-guess { color: var(--muted); white-space: nowrap; }
+  .wd-guess b { color: var(--ink); font-weight: 600; }
+  .wd-guess-a { display: flex; align-items: center; gap: 8px; }
+  .wd-yes { padding: 1px 9px; border-radius: 999px; color: var(--ink); }
+  .wd-guess-c { margin: -6px -5px -6px -4px; }
+  .wd-guess-w { display: none; }      /* where the guess comes from: a tooltip on a computer, a line of its own on a phone (below) */
 
   /* a piece just removed: one line where its row was, with its own Undo beside the words (not where Remove sat) */
   .wd-gone { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; padding: 8px 0 8px 40px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
@@ -885,6 +928,7 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
     .wd-cols { display: none; }
     .wd-row { grid-template-columns: 30px minmax(0, 1fr) auto; }
     .wd-c-size { max-width: 110px; justify-self: end; }
+    .wd-c-guess { max-width: none; }
     .wd-c-chart { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; }
     .wd-c-remove { grid-column: 3; grid-row: 2; }
     .wd-ed-c { grid-template-columns: minmax(0, 1fr); }
@@ -927,6 +971,16 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
     .wd-score-n small { font-size: 15px; }
     .wd-size { min-width: 48px; padding: 3px 10px; font-size: 16px; }
     .wd-none { font-size: 15px; }
+    /* (a probable size is a line of its own across the card, under the piece's name: the guess, then Yes and Change at a size for a thumb) */
+    .wd-c-size.wd-c-guess { grid-column: 1 / -1; grid-row: 2; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 10px; max-width: none; margin-top: 8px; padding: 0; font-size: 16px; justify-self: stretch; }
+    .wd-guess-w { display: block; flex: 1 1 100%; color: var(--muted); font-size: 15px; line-height: 1.35; white-space: normal; }
+    .wd-row-guess > .wd-c-chart { grid-row: 3; }
+    .wd-row-guess > .wd-c-fit { grid-row: 4; }
+    .wd-row-guess > .wd-c-look { grid-row: 5; }
+    .wd-row-guess > .wd-ed { grid-row: 6; }
+    .wd-row-guess > .wd-c-remove { grid-row: 7; }
+    .wd-yes { min-width: 64px; padding: 4px 16px; }
+    .wd-guess-c { margin: 0; }
     .wd-star { width: 44px; height: 44px; }
     .wd-star-i { width: 24px; height: 24px; }
     .wd-select, .wd-input, .wd-add .wd-input, .wd-add .wd-select, .wd-ed .wd-input, .wd-ed .wd-select { height: 44px; padding: 6px 10px; font-size: 16px; }
@@ -1232,12 +1286,13 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
   /* His own pieces for the piece being changed: a grid of pictures, each drawn alone with its name under it, the one that is on ticked. Every one of them is shown. */
   .of-yours { padding: 0 12px 12px; }
   .of-yours-l { font-size: 12px; line-height: 1.35; color: var(--muted); }
+  .of-yours > .of-yours-l { display: flex; align-items: center; justify-content: space-between; gap: 10px; }      /* (its words, and where there is one the press that goes to the pieces he is trying) */
   .of-root .of-yours-l { margin-bottom: 6px; }
   .of-root .of-mgrid + .of-yours-l { margin-top: 12px; }
   .of-mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
   .of-root .of-tile-m { padding: 6px 4px; font-size: 12px; color: var(--ink); }
   .of-tile-m .of-th { width: 100%; max-width: 72px; height: auto; aspect-ratio: 1; }
-  .of-tile-m .of-cap { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 2.5em; overflow: hidden; overflow-wrap: anywhere; }
+  .of-tile-m .of-cap { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; min-height: 2.5em; overflow: hidden; overflow-wrap: anywhere; }
   /* "Something else": the way back to his own pieces, then the kinds, colours and designs */
   .of-else-h { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 0 12px 10px; font-size: 12.5px; }
   .of-root .of-back::before, .of-root .of-other::after { content: ""; flex: none; width: 6px; height: 6px; border: solid currentColor; border-width: 0 0 1.5px 1.5px; opacity: .7; }
@@ -1341,9 +1396,10 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
   .of-root .of-igrp .of-hint { margin-bottom: 8px; }
   .of-root .of-igrp-0 { padding: 6px 0 10px; }
   /* (positioned, so the words kept for screen readers inside a card that is out of sight to the right are cut off with it, and do not make the whole page scroll sideways) */
-  .of-cards { position: relative; display: flex; align-items: stretch; gap: 8px; margin: 0 -4px; padding: 2px 4px 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding: 0 4px; scrollbar-width: thin; }
+  /* (13 Oct 2026) the ideas, six at most, are all in sight at once: a grid, three across where there is room and two on a phone, with nothing off the side to slide to */
+  .of-cards { position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); align-items: stretch; gap: 8px; padding: 2px 0 8px; }
   .of-cards:focus { outline: none; }
-  .of-cards .of-idea { flex: 0 0 140px; scroll-snap-align: start; }
+  .of-cards .of-idea { min-width: 0; }
   .of-cards .of-fig { width: 58px; }
   /* on an idea's card: the look on a small figure, and beside it a picture of each piece the idea changes */
   .of-idea-p { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -1360,6 +1416,8 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
   .of-root .of-idea-on .of-idea-b { cursor: default; }
   .of-fig { display: block; width: 70px; margin: 0 auto 4px; }
   .of-idea-t { font-size: 12.5px; line-height: 1.3; font-weight: 600; overflow-wrap: anywhere; }
+  .of-idea-k { align-self: flex-start; padding: 0 7px; border: 1px solid var(--line); border-radius: 999px; font-size: 11px; line-height: 1.55; color: var(--muted); white-space: nowrap; }      /* whose the piece is: "Yours" or "To buy" */
+  .of-idea-own { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); color: var(--ink); }
   .of-idea-w { font-size: 12px; line-height: 1.35; color: var(--muted); }
   .of-set { display: flex; gap: 3px; margin: 2px 0; }
   .of-set i { width: 14px; height: 14px; border-radius: 4px; background: var(--c); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 26%, transparent); }
@@ -1494,7 +1552,7 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
      being changed, and the colour ideas wait under their heading: the pieces come first, close under the figure. */
   @container (max-width: 470px) {
     .of-root { font-size: 15px; }
-    .of-hint, .of-slot-l, .of-slot-x, .of-slot-note, .of-yours-l, .of-chips-l, .of-col-l, .of-col-n, .of-dims, .of-nudge-l, .of-nudge-v, .of-grp-h, .of-hue-n, .of-idea-t, .of-idea-w, .of-facts, .of-note, .of-meas, .of-field span,
+    .of-idea-k, .of-hint, .of-slot-l, .of-slot-x, .of-slot-note, .of-yours-l, .of-chips-l, .of-col-l, .of-col-n, .of-dims, .of-nudge-l, .of-nudge-v, .of-grp-h, .of-hue-n, .of-idea-t, .of-idea-w, .of-facts, .of-note, .of-meas, .of-field span,
       .of-else-h, .of-trying, .of-gone, .of-look-f, .of-idea-a, .of-pick-f, .of-now, .of-mini-l, .of-mini-n, .of-tip { font-size: 15px; }
     .of-root .of-btn, .of-root .of-btn-s, .of-root .of-chip, .of-root .of-lock, .of-root .of-src, .of-root .of-step, .of-root .of-colbtn, .of-root .of-in, .of-root .of-link, .of-cta, .of-root .of-look-n, .of-root .of-tile, .of-root .of-tile-d,
       .of-root .of-tile-k, .of-root .of-tile-m, .of-root .of-ptab, .of-root .of-piece-b, .of-root .of-find, .of-root .of-any-h, .of-root .of-fit { font-size: 15px; }
@@ -1560,7 +1618,6 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
     .of-root .of-save { min-width: 0; }
     .of-root .of-ideas .of-h { font-size: 17px; }
     .of-ideas-h { min-height: 44px; flex-wrap: wrap; }
-    .of-cards .of-idea { flex-basis: 168px; }
     .of-idea-a { height: 52px; }
     .of-looks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .of-look-f { height: 44px; }
@@ -1568,6 +1625,7 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
     .of-root .of-piece-b, .of-root .of-piece-x { min-height: 44px; }
     .of-root .of-piece-x { min-width: 44px; }
     .of-plist { max-height: 46px; }
+    .of-plist-all { max-height: none; }      /* (said again after the line above, which would otherwise win: "Show all" opened nothing on a phone) */
     .of-prow > .of-grp-h, .of-prow > .of-gone, .of-prow > .of-link, .of-plist-0 { line-height: 44px; }
     .of-meas summary { display: inline-flex; align-items: center; min-height: 44px; }
     .of-meas-g { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1585,7 +1643,6 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
     .of-root .of-step { min-width: 0; }
     .of-root .of-lock { padding: 3px 7px; }
     .of-looks { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
-    .of-cards .of-idea { flex-basis: 124px; }
     .of-root .of-ptab { padding: 5px 0 4px; font-size: 11px; }
     .of-root .of-tile-k { flex-basis: 64px; padding-left: 2px; padding-right: 2px; font-size: 11px; }
     .of-dgrid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
@@ -1608,14 +1665,9 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
 
   <div role="tabpanel" id="panel-sizes" aria-labelledby="tab-sizes">
     <section id="secSizes">
-      <div class="h-row"><h2 id="resultsTitle" tabindex="-1">Your size in each brand</h2><button class="ghost" id="toChart" type="button">Add a brand</button></div>
-      <input type="search" id="sizeFind" placeholder="Find a brand" aria-label="Find a brand" autocomplete="off" spellcheck="false" enterkeyhint="search">
-      <p class="note" id="sizeNone" role="status" hidden></p>
-      <div class="scroll"><table id="results"></table></div>
-    </section>
-
-    <section id="secChart">
-      <h2>Add a brand's size chart</h2>
+      <div class="h-row"><h2 id="resultsTitle" tabindex="-1">Your size in each brand</h2><button class="ghost" id="toChart" type="button" aria-expanded="false" aria-controls="secChart">Add a brand</button></div>
+      <div class="sz-add" id="secChart" role="group" aria-labelledby="chartTitle" hidden>
+      <h3 class="sub-h" id="chartTitle">Add a brand's size chart</h3>
       <div class="row">
         <div><label for="cName">Brand and garment</label><input id="cName" placeholder="e.g. Nike tops"></div>
         <div><label for="cKind">What the chart measures</label>
@@ -1635,7 +1687,12 @@ try { const t = JSON.parse(localStorage.getItem('sf.theme')); if (t === 'light' 
 Chest    57  60  62  64
 Length   69  71  72  74"></textarea>
       <div class="hint">Copy the chart straight off the product page. Sizes can run across the top or down the side. It reads chest, waist, hip, length and foot.</div>
-      <div style="margin-top:10px"><button id="cAdd">Add chart</button> <span class="note" id="cMsg"></span></div>
+      <div class="sz-add-go"><button id="cAdd" type="button">Add chart</button><button class="ghost" id="cClose" type="button">Close</button><span class="note" id="cMsg" role="status"></span></div>
+      </div>
+      <p class="note" id="sizeMsg" role="status" hidden></p>
+      <input type="search" id="sizeFind" placeholder="Find a brand" aria-label="Find a brand" autocomplete="off" spellcheck="false" enterkeyhint="search">
+      <p class="note" id="sizeNone" role="status" hidden></p>
+      <div id="results"></div>
     </section>
   </div>
 
@@ -5407,7 +5464,7 @@ Length   69  71  72  74"></textarea>
 // ---------- designs: outer (from prototypes/designs-outer.html) ----------
 /* Designs for hoodies and jackets: a pack for the figure library (window.Avatar). It registers its designs and makes no globals.
    Load it after the library. Ids start with "outer-". Each design is for one kind, hoodie or jacket, and can be worn as the top or as the layer over it.
-   Hoodies: Chest logo (outer-hoodie-mark), Centre mark, Back print (outer-hoodie-back), Zip front (outer-hoodie-zip), Half-zip sweatshirt (outer-hoodie-half-zip: no hood, a stand collar; a top only).
+   Hoodies: Chest logo (outer-hoodie-mark), Centre mark, Back print (outer-hoodie-back), Zip front (outer-hoodie-zip), Half-zip sweatshirt (outer-hoodie-half-zip: no hood, a stand collar; a top, or a layer over a tee).
    Jackets: Puffer jacket, Hooded puffer, Bomber jacket, Coach jacket, Trucker jacket, Work jacket, Varsity jacket, Zip fleece, Two-tone shell (hooded). (A plain zip jacket with a shirt collar,
    a waistband and a slanted pocket for each hand is the kind's own drawing, so it is the Plain design and needs none here.)
    Vests (a layer only): Panelled vest, Fleece vest: the two faces of one reversible vest.
@@ -5624,8 +5681,8 @@ Length   69  71  72  74"></textarea>
 
   // Half-zip sweatshirt: a hoodie's body with no hood: a stand collar and a zip from its top a third of the way down the chest, the zip in the second colour, and a very small mark of the
   // third on his left chest. The zip is laid on the seam 'front' and nowhere else (that seam ends where a half zip ends): the zip() helper above would draw a bar the whole length of the
-  // front in a small picture.
-  add({ id: 'outer-hoodie-half-zip', name: 'Half-zip sweatshirt', slot: 'top', kinds: HOODIE, colours: 3, defaults: [null, '#b9bcbd', '#b9652f'], order: 23,
+  // front in a small picture. (Worn alone or over a tee: it is listed for a top and for a layer, like the other hoodie designs.)
+  add({ id: 'outer-hoodie-half-zip', name: 'Half-zip sweatshirt', slot: BOTH, kinds: HOODIE, colours: 3, defaults: [null, '#b9bcbd', '#b9652f'], order: 23,
     build: { hood: false, collar: 'stand', closure: 'half zip' },
     recipe: function (x) { return x.view === 'back' ? [] : [{ line: 'piping', on: 'front', w: .9, color: 2 }, { mark: 'badge', at: 'leftChest', w: 2.6, color: 3, color2: 3 }]; } });
 
@@ -7637,7 +7694,11 @@ Length   69  71  72  74"></textarea>
                   designs: (slot, kind) => [{ id, name, colours: 1 | 2 | 3 }], Plain first (the figure library's own designs). Without it, or without thumb, no designs are offered;
                            a design a piece already has is kept either way.
                   palette: [{ name, hex }] to offer other swatches than the module's own,
-                  colourName: hex => the word for a colour, where the tool has one way of naming them (the outfit part's). Without it a colour is called by the swatch nearest to it. })
+                  colourName: hex => the word for a colour, where the tool has one way of naming them (the outfit part's). Without it a colour is called by the swatch nearest to it.
+                  guessSize: piece => { size, why?, say? } | null: a probable size for a piece he owns that has none written down, where the page can work one out. It is shown
+                           in place of "No size" as a guess and never as a fact: "Probably M", with Yes (one press writes it down as the piece's size) and Change (opens Edit with
+                           the keyboard in the Size box). why is the one line that says where the guess comes from; say the words to show when they differ from the size itself
+                           ("one size"). Nothing here keeps a guess: until Yes is pressed the piece has no size, in what onChange is handed, in the ranges and in the self-test. })
                                             Draws the wardrobe in el and keeps it up to date. Every edit repaints and then calls onChange(items) with a fresh array; calling render again from there is fine.
                                             wearDefaults (or, without it, wear) must be the TYPED ranges, not the output of deriveWear.
    pickGarment is injected: (chart, wear, fitShift) -> { label, notes }. No sizing rule lives in this file.
@@ -8337,6 +8398,7 @@ Length   69  71  72  74"></textarea>
     st.palette.say = typeof opts.colourName === 'function' ? opts.colourName : null;
     st.thumb = typeof opts.thumb === 'function' ? opts.thumb : null;
     st.designs = typeof opts.designs === 'function' ? opts.designs : null;
+    st.guess = typeof opts.guessSize === 'function' ? opts.guessSize : null;
     st.form.hidden = opts.add === false;
     paint(st);
   }
@@ -8352,6 +8414,14 @@ Length   69  71  72  74"></textarea>
   function commit(st, items, focus, msg) { items.forEach((it, i) => { st.all[st.at[i]].it = it; }); done(st, focus, msg); }
   const patch = (items, i, change) => items.map((it, j) => j === i ? Object.assign({}, it, change) : it);
   const catAt = (st, it) => measure(it, st.charts).cat;
+  // A probable size for a piece he owns that has none written down, as the page gives it: { size, why, say } or null. It is asked for when a row is drawn and when Yes is
+  // pressed, and kept nowhere.
+  function guessOf(st, it) {
+    if (!st.guess || !it || it.size || it.tried === true) return null;
+    let g = null; try { g = st.guess(it); } catch (e) { g = null; }
+    const size = g && typeof g === 'object' ? text(g.size, 24) : '';
+    return size ? { size, why: text(g.why, 160), say: text(g.say, 24) || size } : null;
+  }
   // One favourite per garment type: starring one clears the others that share its type.
   function oneFavourite(st, items, i) {
     const cat = catAt(st, items[i]);
@@ -8417,6 +8487,13 @@ Length   69  71  72  74"></textarea>
       return paint(st);
     }
     if (part[1] === 'done') { st.edit = null; st.kindWas = null; st.focus = i + ':edit'; return paint(st); }
+    // a probable size: Yes writes it down as the piece's size, which is then his own; Change opens the panel with the keyboard in the Size box
+    if (part[1] === 'size-yes') { const g = guessOf(st, it); return g ? commit(st, patch(st.items, i, { size: g.size }), i + ':edit', `${nameOf(it)}: size set to ${g.size}.`) : undefined; }
+    if (part[1] === 'size-change') {
+      st.edit = it.id; st.slot = 0; st.focus = i + ':size'; st.kindWas = null;
+      if (grouped(measure(it, st.charts)) === 'rest') st.rest = true;
+      return paint(st);
+    }
     if (part[1] === 'slot') { st.slot = Math.max(0, Math.min(2, +part[2] || 0)); return paint(st); }
     if (part[1] === 'pal') {
       const slot = st.slot || 0, hex = part[2] === 'none' ? null : part[2] === 'own' ? hexOf(it.colors[slot]) : (st.palette[+part[2]] || {}).hex || null;
@@ -8660,11 +8737,11 @@ Length   69  71  72  74"></textarea>
     const b = norm(it.brand), same = mine.filter(c => sameBrand(c, b)), other2 = mine.filter(c => !same.includes(c));
     const short = c => { const n = c.name.trim(), br = text(it.brand); return br && n.toLowerCase().startsWith(br.toLowerCase() + ' ') ? cap(n.slice(br.length).trim()) || n : n; };
     const opt = (c, label) => `<option value="${st.charts.indexOf(c)}"${m.chart === c ? ' selected' : ''}>${esc(label)}</option>`;
-    const why = live ? '' : whyNot(st, it, m), ok = confirmed(it), needs = !tried && !ok, open = st.edit === it.id, what = kindOf(it.slot, it.kind);
+    const why = live ? '' : whyNot(st, it, m), ok = confirmed(it), needs = !tried && !ok, open = st.edit === it.id, what = kindOf(it.slot, it.kind), g = guessOf(st, it);
     // a line of its own about the piece's look: the swatches that set its colour, or why a piece with a colour still cannot be worn in an outfit
     const look = needs ? (open ? '' : stripHTML(st, it, i, an)) : tried || !ok ? '' : !what ? '<span class="wd-say">Press Edit and say what this is, and it can be worn in outfits.</span>'
       : what[3] === false ? `<span class="wd-say">There is no drawing of a ${esc(what[2].toLowerCase())} yet, so it stays out of outfits.</span>` : '';
-    let h = `<li class="wd-row${live ? '' : why ? ' wd-row-note' : look || open ? '' : ' wd-row-one'}${!live && (look || open) ? ' wd-row-more' : ''}">`;
+    let h = `<li class="wd-row${live ? '' : why ? ' wd-row-note' : look || open ? '' : ' wd-row-one'}${!live && (look || open) ? ' wd-row-more' : ''}${g ? ' wd-row-guess' : ''}">`;
     h += '<span class="wd-c-star">' + (live && !tried ? `<button type="button" class="wd-star" aria-pressed="${it.favourite ? 'true' : 'false'}" aria-label="Favourite: ${an}" ` +
       `title="${it.favourite ? 'Your favourite ' + esc(one(m.cat)) : 'Make this your favourite ' + esc(one(m.cat))}"${f('star')}>${STAR}</button>` : '') + '</span>';
     h += '<span class="wd-c-piece">' + picHTML(st, it, i) + '<span class="wd-name">' + (it.brand ? `<span class="wd-brand">${esc(it.brand)}</span> ` : '') +
@@ -8672,7 +8749,12 @@ Length   69  71  72  74"></textarea>
       (ok && !tried ? `<span class="wd-sr">, ${esc(coloursSaid(st.palette, it))}</span>` : '') +
       (tried ? ' <span class="wd-tag">Tried only</span>' : '') + (needs ? ' <span class="wd-tag wd-tag-no">Colour not set</span>' : '') +
       ` <button type="button" class="wd-link" aria-expanded="${open ? 'true' : 'false'}" aria-label="Edit ${an}"${f('edit')}>Edit</button></span></span>`;
-    h += '<span class="wd-c-size">' + (it.size ? `<span class="wd-size" title="${esc(it.size)}"><span class="wd-sr">Size </span>${esc(it.size)}</span>` : '<span class="wd-none">No size</span>') + '</span>';
+    // its size; or, where none is written down and the page can work out a probable one, that as a guess with the two presses that settle it; or "No size"
+    h += it.size ? `<span class="wd-c-size"><span class="wd-size" title="${esc(it.size)}"><span class="wd-sr">Size </span>${esc(it.size)}</span></span>`
+      : g ? `<span class="wd-c-size wd-c-guess"><span class="wd-guess"${g.why ? ` title="${esc(g.why)}"` : ''}><span class="wd-sr">No size written down. </span>Probably <b>${esc(g.say)}</b></span>` +
+        `<span class="wd-guess-a"><button type="button" class="wd-ghost wd-yes" aria-label="Yes, ${an} is size ${esc(g.size)}"${g.why ? ` title="${esc(g.why)}"` : ''}${f('size-yes')}>Yes</button>` +
+        `<button type="button" class="wd-link wd-guess-c" aria-label="Change the size of ${an}"${f('size-change')}>Change</button></span>${g.why ? `<span class="wd-guess-w">${esc(g.why)}</span>` : ''}</span>`
+      : '<span class="wd-c-size"><span class="wd-none">No size</span></span>';
     h += noChart ? '<span class="wd-c-chart wd-c-chart-0"></span>'
       : `<span class="wd-c-chart"><span class="wd-cap" aria-hidden="true">Chart</span><select class="wd-select${m.chart ? '' : ' wd-select-off'}" aria-label="Size chart for ${an}"${f('chart')}><option value="">${st.charts.length ? 'No chart' : 'No charts yet'}</option>` +
       (same.length ? `<optgroup label="${esc(it.brand)}">${same.map(c => opt(c, short(c))).join('')}</optgroup>` : '') +
@@ -9640,8 +9722,8 @@ Length   69  71  72  74"></textarea>
 <!-- /photo:lib -->
 <!-- outfit:lib -->
 <script id="outfit-lib">
-/* Outfit playground: window.Outfit = { mount(el, opts) -> { get(), set(look), save(), add(pieces), view(side?), show(part?), update(opts), destroy() }, colours, closest(hex), colourName(hex),
-                                         ideas(look, locks, opts), design(d, mainColour), shape(slot, value), pattern(), selftest() }
+/* Outfit playground: window.Outfit = { mount(el, opts) -> { get(), set(look), save(), add(pieces), has(pieces), view(side?), show(part?), update(opts), destroy() }, colours, closest(hex), colourName(hex),
+                                         ideas(look, locks, opts), suggest(look, locks, opts), surprise(look, locks, opts, rnd?), design(d, mainColour), shape(slot, value), pattern(), selftest() }
    A place to dress the figure by picking what he sees, and to come away knowing what to buy. The pieces, their kinds and their designs are all small pictures, drawn by the
    figure library in the colours he chooses; one click on a picture wears it. Ideas are ideas: nothing here scores an outfit or changes a size.
 
@@ -9709,6 +9791,15 @@ Length   69  71  72  74"></textarea>
      piece is a neutral, which the dictionary has little for. avatar: the figure library, for which designs there are and how they are coloured.
      idea = { id, from, title, why, slots: [the slots it changes], look: the whole look with them changed }, and from the dictionary also no: [combination numbers],
      match: 'close' | 'loose' | 'stretch', combo: [hex], names: [name], hit: [which of combo sit near a kept piece].
+   suggest(look, locks, { wardrobe, fits, limit, auto, avatar }) -> { locked, based, free, left, chosen, items: [idea] }: THE IDEAS THE PAGE SHOWS (since 13 Oct 2026).
+     At most six, each changing one piece of what he has on and leaving the rest as it is: pieces he owns first (from: 'wardrobe', each exactly as the wardrobe has it), then
+     things he could walk into a shop and buy (from: 'shop'): a tee, a shirt, a sweatshirt, a hoodie, a plain jacket, jeans, trousers, shorts, sneakers, a cap or a beanie,
+     plain, in a colour that garment is commonly sold in, and named as a shop would name it ("Olive sweatshirt", "Dark jeans"). Never a vest, never a design, never a colour out
+     of the dictionary. Kept pieces, the piece the ideas are built around, and trousers or shoes in a colour of his own are left alone exactly as ideas() leaves them.
+     ideas() itself is the older engine: suggest() uses its judging and its reasons, but what ideas() proposes (easy recolourings, the dictionary's combinations, pieces he is
+     trying) is no longer shown anywhere on the page.
+   surprise(look, locks, { wardrobe, fits, avatar, features }, rnd?) -> a look at random, as "Surprise me" makes one: kept pieces as they are, every other piece one he owns or
+     one of those shop garments in one of its colours.
    design(d, mainColour) -> a design as the playground would keep it, { id, colors }, or null for none: for a host that checks what it stores before handing it back as saved.
    shape(slot, value) -> how a piece is made as the playground would keep it (only the fields that garment can have, each checked), or null: for the same host.
    pattern() -> always null. Patterns and trims have gone; it is kept so that a host which still asks gets an answer.
@@ -9732,7 +9823,7 @@ Length   69  71  72  74"></textarea>
    chosen: a row of the pieces, each a small picture of what is on; then one card for the piece being changed, with its kinds as pictures, its colours as labelled swatches
    (Primary, and Secondary and Third when its design uses them) and every design the library has for it as a picture in those colours, the one that is on ticked; then his own
    pieces for it, and its size. A design whose name says it is on the back ("Back print") is pictured from behind. A pair of shoes with a design has that design's sole, so
-   the sole is chosen only for a plain pair. The colour ideas follow the card. An idea he is trying ("Use this" keeps it, "Put back" undoes it) stays on the figure while he looks at another
+   the sole is chosen only for a plain pair. The colour ideas follow the card: one row of at most six, each one piece changed (his own pieces first, then things to buy; see suggest()). An idea he is trying ("Use this" keeps it, "Put back" undoes it) stays on the figure while he looks at another
    part, and that part says so. The page does not jump: a picture is redrawn in place, the colours open in a frame of fixed height beside their swatches, every idea card ends in
    a line of one height, and after each click the page is scrolled by however far the control he used has moved. Names he types are always written as text.
 
@@ -10119,7 +10210,7 @@ Length   69  71  72  74"></textarea>
   // what a piece is called: "relaxed straight trousers", "sneakers", "shirt", "bucket hat"; short leaves the cut off
   function noun(slot, it, short) {
     if (slot === 'top' && it.long === true && !short) return 'long-sleeve ' + it.kind;
-    if (slot === 'top' && it.kind === 'hoodie' && it.shape && it.shape.hood === false) return (it.shape.closure === 'half zip' && !short ? 'half-zip ' : '') + 'sweatshirt';      // a hoodie without its hood
+    if ((slot === 'top' || slot === 'layer') && it.kind === 'hoodie' && it.shape && it.shape.hood === false) return (it.shape.closure === 'half zip' && !short ? 'half-zip ' : '') + 'sweatshirt';      // a hoodie without its hood, worn alone or over a tee
     if (slot === 'bottom') return it.kind === 'shorts' ? 'shorts' : (short ? '' : (FIT_WORD[it.fit] || it.fit) + ' ') + (it.kind === 'trousers' ? 'trousers' : 'jeans');
     if (slot === 'shoes') return SHOE[it.kind] || 'shoes';
     if (slot === 'hat') return HAT[it.kind] || 'hat';
@@ -10311,6 +10402,12 @@ Length   69  71  72  74"></textarea>
   const soleOf = s => s.sole || (s.kind === 'chelsea' || s.kind === 'sandal' ? SOLES[1][1] : SNEAKERS.indexOf(s.kind) < 0 ? SOLES[2][1] : lab(s.color)[0] > 80 ? SOLES[1][1] : SOLES[0][1]);
   // The design a piece wears as the library lists it, and what that design says of how the piece is made (its build), where the library says: {} when it does not.
   const buildOf = (A, slot, it) => { const d = designOn(A, slot, it); return (d && d.build) || {}; };
+  // A layer that goes on over the head cannot be worn open: a pullover hoodie or a half-zip sweatshirt worn over a tee. The piece says so (its shape does up with nothing,
+  // or with a zip only part of the way), or failing that its design does. Any other layer has a front that opens. Such a piece is never drawn open and its card has no
+  // "Worn: Done up / Open"; the look still remembers how he wears his layers, so a jacket put on after it is open if the one before it was.
+  const pullover = (A, it) => { const c = (it.shape && it.shape.closure) || buildOf(A, 'layer', it).closure; return c === 'none' || c === 'half zip'; };
+  // a top that does up with a zip part of the way (a half-zip sweatshirt: the piece says so, or its design does) has a collar and no hood, so it is offered no hood to switch
+  const halfZip = (A, slot, it) => ((it.shape && it.shape.closure) || buildOf(A, slot, it).closure) === 'half zip';
   // has it a hood: what the piece itself says, else its design, else its kind (a hoodie has one, a jacket has none)
   const hoodOn = (A, slot, it) => it.shape && typeof it.shape.hood === 'boolean' ? it.shape.hood : typeof buildOf(A, slot, it).hood === 'boolean' ? buildOf(A, slot, it).hood : it.kind === 'hoodie';
   // the shapes of cap the library can draw (none for an older library), and the one a cap has ('' for the cap as it always was)
@@ -10350,7 +10447,7 @@ Length   69  71  72  74"></textarea>
     if (look.layer && !F.layer) st.top = style(dims(look.layer, env.fits), look.layer, 'top');
     else {
       st.top = style(dims(look.top, env.fits), look.top, 'top');
-      if (F.layer) st.layer = look.layer ? style(Object.assign(dims(look.layer, env.fits), { kind: look.layer.kind, open: !!look.layer.open }), look.layer, 'layer') : null;
+      if (F.layer) st.layer = look.layer ? style(Object.assign(dims(look.layer, env.fits), { kind: look.layer.kind, open: !!look.layer.open && !pullover(env.avatar, look.layer) }), look.layer, 'layer') : null;
     }
     st.bottom = style(F.wide ? { kind: b.kind, fit: b.fit, color: b.color } : { kind: b.kind === 'shorts' ? 'shorts' : 'jeans', fit: b.fit === 'straight' ? 'straight' : 'baggy', color: b.color }, b, 'bottom');
     if (F.shoes) st.shoes = style({ kind: look.shoes.kind, color: look.shoes.color, sole: soleOf(look.shoes) }, look.shoes, 'shoes');
@@ -10747,43 +10844,151 @@ Length   69  71  72  74"></textarea>
     return out;
   }
 
-  // a look at random that leaves the locked pieces alone. Mostly drawn from combinations the easy rules allow; now and then a top, a layer or a hat takes any colour at all.
-  // The trousers and the shoes only ever get the colours ideas use for them.
+  // ---------- ideas he could act on, and Surprise me (13 Oct 2026) ----------
+  // What the page proposes, in its ideas and in a look at random, is only ever (a) a piece he owns, exactly as his wardrobe has it, or (b) something he could walk into a shop
+  // and buy: an ordinary garment, plain (no design, nothing special about how it is made), in a colour that garment is commonly sold in. Never a vest, never the unusual piece
+  // he has on in another colour, never a colour out of the dictionary. (ideas(), above, is the older engine: its judging and its reasons are used here; what it proposes itself,
+  // easy recolourings and the dictionary's combinations, is no longer shown on the page.)
+  // SHOP: for each part of the outfit, the ordinary garments: the kind, what a shop calls it, the colours it is commonly sold in, and how it is made where that needs saying
+  // (a sweatshirt is a hoodie with no hood; trousers have an ordinary relaxed straight leg, not the wide cut). The colours for trousers, shorts and shoes are all among the
+  // commonly worn ones (POOL), so his rule for those holds here as well.
+  const ORDINARY_LEG = { leg: { thigh: 31, knee: 25, hem: 22.5 }, crease: false };
+  const SHOP = {
+    top: [['tee', 'tee', 'White,Off-white,Cream,Black,Washed black,Grey marle,Charcoal,Navy,Olive,Sage,Forest,Brown,Chocolate,Burgundy,Sand,Pale blue'],
+      ['shirt', 'shirt', 'White,Off-white,Pale blue,Navy,Black,Olive,Sage,Sand,Stone,Khaki,Charcoal'],
+      ['hoodie', 'sweatshirt', 'Grey marle,Black,Washed black,Navy,Charcoal,Off-white,Cream,Olive,Forest,Sage,Brown,Burgundy', { hood: false }],
+      ['hoodie', 'hoodie', 'Grey marle,Black,Washed black,Navy,Charcoal,Off-white,Cream,Olive,Forest,Brown,Burgundy']],
+    layer: [['jacket', 'jacket', 'Black,Washed black,Charcoal,Navy,Olive,Forest,Khaki,Tan,Brown,Chocolate,Stone']],
+    bottom: [['jeans', 'jeans', 'Black,Washed black,Charcoal,Raw indigo,Mid-wash blue,Light-wash blue,Ecru,Off-white'],
+      ['trousers', 'trousers', 'Black,Charcoal,Mid grey,Navy,Olive,Khaki,Sand,Stone,Ecru,Off-white,Brown,Chocolate,Tan', ORDINARY_LEG],
+      ['shorts', 'shorts', 'Black,Charcoal,Mid grey,Navy,Olive,Khaki,Sand,Stone,Ecru,Off-white,Brown']],
+    shoes: [['sneaker', 'sneakers', 'White,Off-white,Ecru,Black,Mid grey,Navy']],
+    hat: [['cap', 'cap', 'Black,Washed black,Navy,Off-white,Cream,Stone,Khaki,Olive,Forest,Brown,Burgundy,Mid grey'], ['beanie', 'beanie', 'Black,Charcoal,Mid grey,Grey marle,Navy,Olive,Forest,Burgundy,Cream,Brown']]
+  };
+  for (const s in SHOP) SHOP[s] = SHOP[s].map(x => ({ kind: x[0], word: x[1], colours: x[2].split(',').map(staple), shape: x[3] || null }));
+  // A shop garment as a piece to put on: plain, at how he likes that kind to sit. Jeans come in the cut he has on where that is baggy or straight (baggy otherwise, his usual).
+  function shopPiece(slot, g, c, L) {
+    const p = { slot, kind: g.kind, color: c.hex };
+    if (slot === 'bottom' && g.kind !== 'shorts') p.fit = g.kind === 'trousers' ? 'straight' : L && L.bottom && L.bottom.kind !== 'shorts' && L.bottom.fit === 'straight' ? 'straight' : 'baggy';
+    if (g.shape) p.shape = copy(g.shape);
+    return p;
+  }
+  // What a shop garment is called on its card: its colour and what it is, as plainly as a shop would say it ("Olive sweatshirt", "Dark jeans", "Grey trousers").
+  const DENIM_SAID = { 'raw indigo': 'dark', 'mid-wash blue': 'mid-blue', 'light-wash blue': 'light-blue' }, SHOP_SAID = { 'mid grey': 'grey' };
+  const shopTitle = (g, c) => { const w = said(c.hex); return cap(`${(g.kind === 'jeans' && DENIM_SAID[w]) || SHOP_SAID[w] || w} ${g.word}`); };
+  // the best few of some candidates that do not repeat each other: same(a, b) says how much alike two are
+  function fewOf(cands, n, same) {
+    const pool = cands.slice().sort((a, b) => b.rank - a.rank), got = [];
+    while (got.length < n && pool.length) {
+      let bi = 0, bs = -1e9;
+      pool.forEach((c, i) => { let sc = c.rank; got.forEach(g => { sc -= same(c, g); }); if (sc > bs) { bs = sc; bi = i; } });
+      got.push(pool.splice(bi, 1)[0]);
+    }
+    return got;
+  }
+  // GARMENT: a piece of his is known by its id; the same garment can be handed over more than once, as a top and as a layer under the one id (a hoodie), or once for each
+  // side of a reversible piece under "id" and "id~side". The garment is the id before any "~".
+  const garmentOf = id => String(id).split('~')[0];
+  // The ideas the page shows: at most six (o.limit for fewer), each changing ONE piece of what he has on and leaving the rest exactly as it is. His own wardrobe first (a piece
+  // of his for a part of the outfit that is not kept: the best for each part before a second for any), then things to buy (SHOP), for the parts ideas may change.
+  // What is kept, what the ideas are built around when nothing is (auto), and which parts are left alone are worked out as ideas() works them out.
+  // -> { locked, based, free, left, chosen, items: [idea] }, an idea being { id, from: 'wardrobe' | 'shop', title, why, slots: [the one slot it changes], look }.
+  function suggest(look, locks, o) {
+    o = o || {};
+    const A = o.avatar && typeof o.avatar === 'object' ? o.avatar : null, L = norm(look, o.fits, A), K = {};
+    SLOTS.forEach(s => { K[s] = !!(locks && locks[s] && L[s]); });
+    const on = SLOTS.filter(s => L[s]);
+    let based = null;
+    if (o.auto && !on.some(s => K[s])) { based = anchorOf(A, L); K[based] = true; }
+    const locked = on.filter(s => K[s]), open = on.filter(s => !K[s]);
+    const small = s => s === 'hat' || (s === 'shoes' && L.bottom.kind !== 'shorts'), his = s => (s === 'bottom' || s === 'shoes') && !common(L[s].color);
+    const rest = open.filter(s => !his(s)), big = rest.filter(s => !small(s)), free = big.length ? big : rest.length ? rest : open, left = open.filter(s => free.indexOf(s) < 0);
+    const out = { locked, based, free, left, chosen: left.filter(his), items: [] };
+    if (!locked.length) return out;
+    // one piece put on, everything else as he has it: how the look is then judged, and the idea it makes
+    const tryOn = (from, p, extra) => {
+      const w = wear(p, o.fits, A), next = copy(L), KP = {};
+      if (w.slot === 'layer') w.item.open = !!(L.layer && L.layer.open);      // worn the way the layer he has on is worn
+      next[w.slot] = w.item;
+      SLOTS.forEach(s => { KP[s] = s !== w.slot; });
+      const P = paintOf(A, next), j = judge(P.Q, KP, P.X), me = j.t[w.slot], other = me && me.colour ? j.col.find(s => s !== w.slot && hueGap(j.t[s].h, me.h) > SET.hue) : null;
+      return { slot: w.slot, j, rank: j.score, item: w.item,
+        // (a piece of his is called exactly what his wardrobe calls it: "adidas BW Army trainers", small letter and all)
+        idea: () => made(A, from, L, { [w.slot]: { item: w.item } }, Object.assign({ why: other ? `Two colours together: ${said(leadOf(P.Q, P.X, w.slot))} and ${said(leadOf(P.Q, P.X, other))}.` : reason(A, { j, Q: P.Q, X: P.X }, next, KP, [w.slot]) },
+          from === 'wardrobe' && w.item.name ? { title: w.item.name } : null, extra)) };
+    };
+    // his own pieces, for anything not kept, each exactly as it was given: a layer even when none is on, a hat only when he has one on. The piece that is on already is not an idea.
+    const spare = SLOTS.filter(s => !K[s] && (s !== 'hat' || L.hat));
+    // One garment is one idea at most, and never an idea while he has it on in another part: a hoodie of his is handed over as a top and as a layer, a reversible piece once
+    // for each side (GARMENT, above). The other side of the piece that is on is still an idea. A hoodie or sweatshirt is never proposed over, or under, another.
+    const elsewhere = p => SLOTS.some(s => s !== p.slot && L[s] && L[s].ref != null && garmentOf(L[s].ref) === garmentOf(p.id));
+    const doubled = (slot, kind) => kind === 'hoodie' && ((slot === 'layer' && L.top.kind === 'hoodie') || (slot === 'top' && !!L.layer && L.layer.kind === 'hoodie'));
+    const each = (Array.isArray(o.wardrobe) ? o.wardrobe.filter(drawable) : []).filter(p => spare.indexOf(p.slot) >= 0 && !(L[p.slot] && L[p.slot].ref != null && L[p.slot].ref === String(p.id)) && !elsewhere(p) && !doubled(p.slot, p.kind))
+      .map(p => { const t = tryOn('wardrobe', p); t.rank += (t.j.pattern !== 'mixed' ? 10 : 0) - (small(t.slot) && spare.some(s => !small(s)) ? 3 : 0); return t; });      // (the big pieces before shoes and a hat)
+    const best = {}, gkey = (t, i) => t.item.ref != null ? garmentOf(t.item.ref) : '#' + i;
+    each.forEach((t, i) => { const k = gkey(t, i); if (!best[k] || t.rank > best[k].rank) best[k] = t; });
+    const mine = each.filter((t, i) => best[gkey(t, i)] === t);
+    // things to buy, for the parts ideas may change: long legs stay long and shorts stay shorts, a cap stays a cap, and nothing is offered that he already has on
+    const shop = [];
+    free.forEach(s => {
+      const cur = L[s], now = noun(s, cur, true);
+      SHOP[s].filter(g => s !== 'bottom' || (cur.kind === 'shorts') === (g.kind === 'shorts')).filter(g => s !== 'hat' || !SHOP.hat.some(x => x.kind === cur.kind) || g.kind === cur.kind).filter(g => !doubled(s, g.kind)).forEach(g => g.colours.forEach(c => {
+        if (!cur.design && now === g.word && far(cur.color, c.hex) < 5) return;
+        const t = tryOn('shop', shopPiece(s, g, c, L), { id: `shop:${s}=${g.word}${c.hex}`, title: shopTitle(g, c) });
+        if (!t.j.ok) return;                                  // (a colour that would sit badly with what he has on is not an idea)
+        t.word = g.word; t.hex = c.hex; t.rank += now === g.word ? .3 : 0;
+        shop.push(t);
+      }));
+    });
+    const limit = cl(Math.round(+o.limit) || 6, 1, 6), nMine = Math.min(mine.length, Math.max(Math.ceil(limit / 2), limit - shop.length)), nShop = Math.min(shop.length, limit - nMine);
+    const a = fewOf(mine, nMine, (x, y) => x.slot === y.slot ? 2.5 : 0);
+    const b = fewOf(shop, nShop, (x, y) => (x.slot === y.slot ? 2 : 0) + (x.word === y.word ? 4 : 0) + (far(x.hex, y.hex) < 7 ? 3 : 0));
+    out.items = a.concat(b).map(t => t.idea());
+    return out;
+  }
+
+  // A look at random that leaves the kept pieces alone. Every other piece is one he owns (env.wardrobe, about half the time where he has any for that part of the outfit) or a
+  // shop garment in one of its common colours (SHOP): nothing else. A few whole looks are drawn and one of the better ones, by the same judging the ideas use, is taken.
   function randomLook(look, locks, env, rnd) {
-    const L = copy(look), F = env.features || {}, A = env.avatar || null, pick = a => a[Math.floor(rnd() * a.length) % a.length], K = Object.assign({}, locks);
-    // the kinds he wears most come up most: tees, shirts and hoodies; baggy jeans; sneakers
-    const often = (slot, w) => { const bag = []; KINDS[slot].filter(k => !NEWER[slot + ':' + k[0]]).forEach(k => { for (let i = 0; i < (w[k[0]] || 1); i++) bag.push(k[0]); }); return pick(bag); };      // (a look at random is about colours: it stays with the kinds there always were)
-    if (!K.top) { const k = often('top', { tee: 4, shirt: 3, hoodie: 3 }), like = likes(env.fits, k); L.top = { kind: k, color: L.top.color, chest: like.chest, length: like.length }; }
-    if (!K.bottom) L.bottom = Object.assign({ color: L.bottom.color }, CUT[often('bottom', { baggy: 5, wide: 3 })]);
-    if (!K.shoes) L.shoes = { kind: F.shoes ? often('shoes', { sneaker: 8 }) : L.shoes.kind, color: L.shoes.color };
-    if (!K.layer) {                                           // a layer that is on stays about half the time; one is added now and then, once the figure can draw it
-      if (L.layer ? rnd() < .5 : F.layer && rnd() < .3) { const k = often('layer', { jacket: 3, overshirt: 2 }), like = likes(env.fits, k); L.layer = { kind: k, color: L.layer ? L.layer.color : DEF.layer, chest: like.chest, length: like.length, open: L.layer ? !!L.layer.open : rnd() < .5 }; }
-      else L.layer = null;
+    const L = copy(look), F = env.features || {}, A = env.avatar || null, K = Object.assign({}, locks), pick = a => a[Math.floor(rnd() * a.length) % a.length];
+    const mine = (Array.isArray(env.wardrobe) ? env.wardrobe : []).filter(drawable).map(p => wear(p, env.fits, A)).filter(w => offered(w.slot, w.item.kind, F));
+    // the garments he wears most come up most: tees, then shirts, sweatshirts and hoodies; jeans before trousers before shorts; a cap before a beanie
+    const OFTEN = { tee: 4, shirt: 3, sweatshirt: 2, hoodie: 2, jeans: 5, trousers: 3, shorts: 1, cap: 4, beanie: 2 };
+    // (white, off-white, ecru and stone trousers are worn, but not half the time: they are in the draw about one look in eight)
+    const pale = rnd() < .125;
+    // Two things are never drawn: one garment of his worn twice (a hoodie is handed over as a top and as a layer), and a hoodie or sweatshirt over another. The top is drawn
+    // before the layer, so a layer is drawn to go with the top just drawn, and a top to go with a layer that is staying on.
+    const clash = (a, b) => !!a && !!b && ((a.ref != null && b.ref != null && garmentOf(a.ref) === garmentOf(b.ref)) || (a.kind === 'hoodie' && b.kind === 'hoodie'));
+    const one = (s, C) => {
+      const other = s === 'layer' ? C.top : s === 'top' && !('layer' in plan) ? C.layer : null;
+      const own = mine.filter(w => w.slot === s && !clash(w.item, other));
+      if (own.length && rnd() < .5) return copy(pick(own).item);
+      const bag = [];
+      SHOP[s].forEach(g => { if (!clash({ kind: g.kind }, other)) for (let i = 0; i < (OFTEN[g.word] || 1); i++) bag.push(g); });
+      const g = pick(bag), cols = g.colours.filter(c => s !== 'bottom' || g.kind === 'shorts' || pale || PALE_LEG.indexOf(c.name) < 0);
+      return wear(shopPiece(s, g, pick(cols), L), env.fits, A).item;
+    };
+    // which parts get a new piece (true) and which are taken off (false): a layer that is on stays about half the time, and one is added now and then, once the figure can
+    // draw it; a hat that is on mostly stays, and one is added only now and then
+    const plan = {};
+    ['top', 'bottom', 'shoes'].forEach(s => { if (!K[s]) plan[s] = true; });
+    if (!K.layer) plan.layer = L.layer ? rnd() < .5 : !!F.layer && rnd() < .3;
+    if (!K.hat && F.hat) plan.hat = L.hat ? rnd() < .7 : rnd() < .12;
+    if (!Object.keys(plan).length) return L;
+    const open = L.layer ? !!L.layer.open : rnd() < .5, tries = [];
+    for (let i = 0; i < 24; i++) {
+      const C = copy(L);
+      for (const s in plan) {
+        if (!plan[s]) { C[s] = null; continue; }
+        C[s] = one(s, C);
+        if (s === 'layer') C[s].open = open;
+      }
+      delete C.name;
+      const P = paintOf(A, C);
+      tries.push({ C, j: judge(P.Q, K, P.X) });
     }
-    if (!K.hat && F.hat) {                                    // a hat that is on mostly stays; one is added only now and then
-      if (L.hat ? rnd() < .7 : rnd() < .12) L.hat = { kind: often('hat', { cap: 4, beanie: 2 }), color: L.hat ? L.hat.color : DEF.hat };
-      else L.hat = null;
-    }
-    let free = SLOTS.filter(s => L[s] && !K[s] && (s !== 'hat' || F.hat));
-    if (!free.length) return L;
-    const ups = free.filter(s => UPPER.indexOf(s) >= 0);
-    if (ups.length && rnd() < .35) {                          // the wild one: a dictionary colour on the top (or a layer, or a hat), and the rest built round it
-      const s = ups.indexOf('top') >= 0 ? 'top' : ups[0];
-      L[s] = recolour(L[s], pick(W).hex); K[s] = true; free = free.filter(x => x !== s);
-    }
-    if (free.length) {
-      const pools = {};
-      // (white, off-white, ecru and stone trousers are worn, but not half the time: they are in the draw about one look in eight)
-      const PL = poolsFor(L), pale = rnd() < .125;
-      free.forEach(s => { pools[s] = PL[s].filter(c => s !== 'bottom' || pale || PALE_LEG.indexOf(c.name) < 0).sort(() => rnd() - .5).slice(0, free.length > 3 ? 5 : free.length > 2 ? 7 : 12); });
-      const c = options(A, L, K, free, pools).sort((a, b) => b.j.score - a.j.score), top = c.slice(0, Math.max(8, Math.ceil(c.length / 3)));
-      const got = top.length ? pick(top) : null;
-      free.forEach(s => { L[s] = recolour(L[s], got ? got.Q[s] : pick(pools[s]).hex); });
-    }
-    // now and then the top comes in one of the designs the figure can draw for its kind, in the design's own colours
-    if (!locks.top && rnd() < .25) { const all = designsFor(A, 'top', L.top.kind); if (all.length) L.top = redesign(L.top, { id: pick(all).id }); }
-    delete L.name;
-    return L;
+    const good = tries.filter(t => t.j.ok).sort((a, b) => b.j.score - a.j.score), best = good.length ? good.slice(0, Math.max(4, Math.ceil(good.length / 3))) : tries;
+    return pick(best).C;
   }
 
   // ---------- reading a typed name: "sage boxy shirt", "white wide pants", "red and white striped shirt", "black cap" ----------
@@ -10864,7 +11069,6 @@ Length   69  71  72  74"></textarea>
   const CUTWORDS = ['close-fitting', '', 'relaxed', 'oversized'];
   const SHOWN = 12;                                        // saved looks drawn before "Show all"
   const TABS = [['dress', 'Try on'], ['add', 'Add a piece'], ['looks', 'Saved looks', 'Saved'], ['note', 'What to look for', 'Look for']];      // (the third: what a narrow page has room for)
-  const SOURCES = [['easy', 'Easy'], ['wada', 'Wada’s dictionary'], ['wardrobe', 'Your wardrobe'], ['pieces', 'Pieces to try']];
   const COLS = ['Primary', 'Secondary', 'Third'];          // the colours of a design, as the page calls them
   const KIND_GROUP = { top: 'Kind of top', layer: 'Kind of layer', bottom: 'Cut of trousers', shoes: 'Kind of shoes', hat: 'Kind of hat' };
   const MANY = { top: 'tops', layer: 'layers', bottom: 'trousers or shorts', shoes: 'shoes', hat: 'hats' };
@@ -10909,15 +11113,16 @@ Length   69  71  72  74"></textarea>
       if (w.slot === 'top' && w.item.long === true) out.long = true;
       if (w.slot === 'hat' && w.item.color2) out.color2 = w.item.color2;
       if (w.item.shape) out.shape = w.item.shape;
+      if (typeof p.short === 'string' && p.short.trim()) out.short = p.short.trim().slice(0, 60);      // the few words that fit under its picture, where it came with some
       if ((typeof p.size === 'string' || typeof p.size === 'number') && String(p.size).trim()) out.size = String(p.size).replace(/\s+/g, ' ').trim().slice(0, 12);      // the size on its label: a note, nothing more
       return out;
     };
     const sizeTag = p => p.size ? ` <span class="of-quiet">${esc(p.size)}</span>` : '';
     // Everything the host handed back is kept: nothing here is cut to a number. (A pattern or a trim from before designs is carried over to the nearest design as it is read.)
     const S = {
-      look: norm(now.look, o.fits, lib()), locks: {}, sizes: {}, open: null, pv: null, undo: [], tag: null, tagT: 0, sig: null, got: null, fresh: false, ideasHtml: null, piecesHtml: null, lastLayer: null,
+      look: norm(now.look, o.fits, lib()), locks: {}, sizes: {}, open: null, pv: null, used: null, undo: [], tag: null, tagT: 0, sig: null, got: null, fresh: false, ideasHtml: null, piecesHtml: null, lastLayer: null,
       allPieces: false, allLooks: false, other: {}, ideasOpen: false, gone: null, flash: null, lastHat: null, fitOpen: false, moreCols: false, turned: null, mem: {}, cols: {},
-      tab: 'dress', slot: 'top', src: null, view: 'front',        // which part of the playground is showing, which piece, which kind of idea, and which side of the figure
+      tab: 'dress', slot: 'top', view: 'front',        // which part of the playground is showing, which piece, and which side of the figure
       looks: arr(sv.looks).map(k => ({ id: String(k.id != null ? k.id : uid()).slice(0, 80), name: typeof k.name === 'string' ? k.name.slice(0, 60) : '', look: norm(k.look, o.fits, lib()) })),
       pieces: arr(sv.pieces).filter(p => SLOTS.indexOf(p.slot) >= 0 && hexOf(p.color)).map(cleanPiece)
     };
@@ -10928,7 +11133,8 @@ Length   69  71  72  74"></textarea>
     for (const k in S.sizes) if (plainSize(k.split(':')[1], S.sizes[k])) delete S.sizes[k];
     // The piece being added. tk, tc: he chose the kind, the colour, by hand. rk, rc: the words gave one. Until either, it is a tee in that slot's plain default, and the form says so.
     // r: what the words said (their colours and any style of design). kept: the design of the piece being changed, which it keeps until the words name another.
-    const blank = () => ({ name: '', sk: 'top:tee', color: DEF.top, tk: false, tc: false, rk: false, rc: false, edit: null, said: '', r: null, kept: null });
+    // was, sk0: the piece being changed as it was, and the kind the form opened with for it (adKept, below).
+    const blank = () => ({ name: '', sk: 'top:tee', color: DEF.top, tk: false, tc: false, rk: false, rc: false, edit: null, said: '', r: null, kept: null, was: null, sk0: '' });
     let AD = blank();
 
     // Four parts, one showing at a time, so the playground stays short: the outfit, a piece seen online, the saved looks, and what to look for.
@@ -11170,7 +11376,7 @@ Length   69  71  72  74"></textarea>
     // ----- views -----
     function vTop() {
       const L = view(), free = SLOTS.some(s => L[s] && !S.locks[s]), f = S.flash;
-      return `<div class="of-acts"><button type="button" class="of-btn" data-a="surprise" data-fk="surprise" aria-disabled="${!free}" title="${free ? 'A look at random. Kept pieces stay as they are' : 'Every piece is kept, so there is nothing to change'}">Surprise me</button>` +
+      return `<div class="of-acts"><button type="button" class="of-btn" data-a="surprise" data-fk="surprise" aria-disabled="${!free}" title="${free ? 'A look at random, from your own pieces and ordinary things to buy. Kept pieces stay as they are' : 'Every piece is kept, so there is nothing to change'}">Surprise me</button>` +
         `<button type="button" class="of-btn" data-a="undo" data-fk="undo" aria-disabled="${!S.undo.length}">Undo</button>` +
         `<span class="of-grow of-flash">${f ? '<button type="button" class="of-link" data-a="goto" data-v="looks" data-fk="see">See it</button>' : ''}</span>` +
         `<button type="button" class="of-btn of-btn-p of-save" data-a="save" data-fk="save">${f === 'saved' ? ICON.tick + 'Saved' : f === 'dupe' ? 'Already saved' : 'Save this look'}</button></div>`;
@@ -11282,7 +11488,8 @@ Length   69  71  72  74"></textarea>
       const one = (p, act, i) => { const w = wear(p, o.fits, A).item, name = p.name || titleOf(A, s, w), on = !!cur && cur.ref != null && cur.ref === String(p.id) && asKept(cur, w, p);
         return { fk: 'y:' + act + ':' + i, cls: 'of-tile of-tile-m', attrs: `data-a="${act}" data-i="${esc(i)}"`, th: specOf(A, s, w, 72), set: { 'aria-pressed': on, 'aria-label': name + (p.size ? ', size ' + p.size : ''), title: name }, cap: esc((typeof p.short === 'string' && p.short.trim()) || name) + (act === 'wear-piece' ? sizeTag(p) : '') }; };
       const none = has0 && (s === 'layer' || s === 'hat') ? [{ fk: 'none:' + s, cls: 'of-tile of-tile-m', attrs: `data-a="kind" data-s="${s}" data-v=""`, th: { icon: 'none' }, set: { 'aria-pressed': !cur, 'aria-label': s === 'hat' ? 'No hat' : 'No layer', title: s === 'hat' ? 'No hat' : 'No layer' }, cap: 'None' }] : [];
-      paint('yours-l', m.own.length ? YOURS[s] : `No ${MANY[s]} in your wardrobe yet.`);
+      // (where his own pieces run to more than two rows on a phone, the ones he is trying are a long way down the card: one press beside the heading brings them up)
+      paint('yours-l', `<span>${m.own.length ? YOURS[s] : `No ${MANY[s]} in your wardrobe yet.`}</span>` + (m.own.length > 6 && m.tries.length ? `<button type="button" class="of-link of-jump" data-a="to-tries" data-fk="to-tries">Pieces to try: ${m.tries.length}</button>` : ''));
       R['yours-l'].classList.toggle('of-own-0', has0 && !m.own.length);      // (only pieces he is trying: the line that says his wardrobe has none)
       R.mine.setAttribute('aria-label', YOURS[s]);
       tiles('mine', none.concat(m.own.map(x => one(x[0], 'wear-own', x[1]))));
@@ -11306,11 +11513,11 @@ Length   69  71  72  74"></textarea>
           (it.name && it.name.toLowerCase() !== plainName.toLowerCase() ? `<span class="of-slot-x">${esc(cap(plainName))}</span>` : '') + '</div>' +
           `<div class="of-slot-k"><button type="button" class="of-lock" data-a="lock" data-s="${s}" data-fk="lock:${s}" aria-pressed="${!!S.locks[s]}" title="Colour ideas and Surprise me leave a kept piece alone">${S.locks[s] ? ICON.shut : ICON.ajar}<span class="of-lock-t">${S.locks[s] ? 'Kept' : 'Keep this'}</span></button>` +
           // (done up or open is chosen up here, beside the piece's name, where it is seen without scrolling: open shows the top underneath)
-          (s === 'layer' && F.layer ? `<div class="of-chips of-chips-s of-worn" role="group" aria-label="How the ${noun(s, it)} is worn"><span class="of-chips-l">Worn</span>${chip('openness', s, '0', 'Done up', !it.open)}${chip('openness', s, '1', 'Open', !!it.open)}</div>` : '') +
+          (s === 'layer' && F.layer && !pullover(A, it) ? `<div class="of-chips of-chips-s of-worn" role="group" aria-label="How the ${noun(s, it)} is worn"><span class="of-chips-l">Worn</span>${chip('openness', s, '0', 'Done up', !it.open)}${chip('openness', s, '1', 'Open', !!it.open)}</div>` : '') +
           // (short or long sleeves, for the tops that come both ways, where the figure can draw a long one)
           (s === 'top' && F.long && LONGABLE.indexOf(it.kind) >= 0 ? `<div class="of-chips of-chips-s of-worn" role="group" aria-label="Sleeves"><span class="of-chips-l">Sleeves</span>${chip('sleeves', s, '0', 'Short', !it.long)}${chip('sleeves', s, '1', 'Long', !!it.long)}</div>` : '') +
           // (a hood, on a hoodie or a jacket, and a shirt's collar, ordinary or camp: each a real choice between pieces he owns, where the figure can draw both)
-          ((s === 'top' || s === 'layer') && F.hood && HOODED.indexOf(it.kind) >= 0 ? `<div class="of-chips of-chips-s of-worn" role="group" aria-label="Hood"><span class="of-chips-l">Hood</span>${chip('hood', s, '1', 'On', hoodOn(A, s, it))}${chip('hood', s, '0', 'Off', !hoodOn(A, s, it))}</div>` : '') +
+          ((s === 'top' || s === 'layer') && F.hood && HOODED.indexOf(it.kind) >= 0 && !halfZip(A, s, it) ? `<div class="of-chips of-chips-s of-worn" role="group" aria-label="Hood"><span class="of-chips-l">Hood</span>${chip('hood', s, '1', 'On', hoodOn(A, s, it))}${chip('hood', s, '0', 'Off', !hoodOn(A, s, it))}</div>` : '') +
           (s === 'top' && F.own && it.kind === 'shirt' ? `<div class="of-chips of-chips-s of-worn" role="group" aria-label="Collar"><span class="of-chips-l">Collar</span>${chip('collar', s, '0', 'Ordinary', !campOn(A, s, it))}${chip('collar', s, '1', 'Camp', campOn(A, s, it))}</div>` : '') +
           // (a cap's shape, where the figure can draw them: the cap as it always was, a soft unstructured one, or a structured one with an upright front)
           (s === 'hat' && it.kind === 'cap' && capShapes(F).length ? `<div class="of-chips of-chips-s of-worn" role="group" aria-label="Shape of the cap"><span class="of-chips-l">Shape</span>${chip('capshape', s, '', 'Classic', !capShapeOn(F, it))}${capShapes(F).map(v => chip('capshape', s, v, cap(v), capShapeOn(F, it) === v)).join('')}</div>` : '') +
@@ -11439,53 +11646,51 @@ Length   69  71  72  74"></textarea>
     function ideaList() {
       const L = S.look, F = env().features;
       // everything an idea is built from or drawn with: change any of it and they are worked out again
-      const sig = JSON.stringify([S.locks, L, own(), S.pieces, o.fits || 0, o.body || 0, [F.layer, F.shoes, F.wide, F.designs, F.hat]]);
+      const sig = JSON.stringify([S.locks, L, own(), o.fits || 0, o.body || 0, [F.layer, F.shoes, F.wide, F.designs, F.hat]]);
       // (a hat the figure cannot draw takes no part: ideas change only the pieces they name, so it stays on the look untouched)
-      if (sig !== S.sig) { S.sig = sig; S.got = ideas(F.hat ? L : Object.assign({}, L, { hat: null }), S.locks, { wardrobe: own(), pieces: S.pieces, fits: o.fits, auto: true, avatar: lib() }); S.fresh = true; }
+      if (sig !== S.sig) {
+        S.sig = sig; S.got = suggest(F.hat ? L : Object.assign({}, L, { hat: null }), S.locks, { wardrobe: own(), fits: o.fits, auto: true, avatar: lib() }); S.fresh = true;
+        // An idea never proposes what is on already, so the idea he has just used would drop out of the row under his hand. Its card is kept instead, where his own pieces
+        // or the things to buy end, for as long as that piece stays on as the idea put it: the row still holds six at most.
+        const u = S.used;
+        if (u && !u.slots.every(s => sameItem(u.look[s], L[s]))) S.used = null;
+        else if (u && !S.got.items.some(x => x.id === u.id)) {
+          const items = S.got.items, mine = items.filter(x => x.from === 'wardrobe').length, at = u.from === 'wardrobe' ? mine : items.length;
+          items.splice(at, 0, Object.assign({}, u, { look: copy(L) }));
+          if (items.length > 6) items.splice(u.from === 'wardrobe' && mine > 0 ? mine - 1 : items.length - (at === items.length - 1 ? 2 : 1), 1);
+        }
+      }
       return S.got;
     }
-    const allIdeas = g => g ? g.easy.concat(g.wada.items, g.wardrobe, g.pieces) : [];
+    const allIdeas = g => g ? g.items : [];
     // Are the ideas folded away? Only where the page shows the button that folds them (a narrow one), and until it is pressed.
     const ideasFolded = () => { if (S.ideasOpen) return false; const b = byFk(R.ideas, 'ideas-fold'); return !!b && b.getClientRects().length > 0; };
     const ideaAt = id => allIdeas(S.got).find(x => x.id === id) || null;
-    // An idea's card: the whole look on a small still figure and, beside it, a picture of each piece the idea changes (a figure that small cannot show a fine design; the
-    // picture can), then what it is and why.
+    // An idea's card: whether the piece is his or one to buy; the whole look on a small still figure and, beside it, a picture of the piece the idea changes (a figure that
+    // small cannot show a fine design; the picture can); then what it is, named plainly, and why.
     function vIdea(it) {
       return `<div class="of-idea" data-idea="${esc(it.id)}"><button type="button" class="of-idea-b" data-a="try" data-i="${esc(it.id)}" data-fk="try:${esc(it.id)}" aria-pressed="false">` +
+        `<span class="of-idea-k${it.from === 'wardrobe' ? ' of-idea-own' : ''}">${it.from === 'wardrobe' ? 'Yours' : 'To buy'}</span>` +
         `<span class="of-idea-p" aria-hidden="true"><span class="of-fig" data-fig="${esc(it.id)}"></span><span class="of-idea-th">${it.slots.filter(s => it.look[s]).slice(0, 3).map(s => th(s, it.look[s], 32)).join('')}</span></span><span class="of-idea-t">${esc(it.title)}</span>` +
-        (it.combo ? `<span class="of-set" aria-hidden="true">${it.combo.map((h, i) => `<i class="${it.hit.indexOf(i) >= 0 ? 'of-set-y' : ''}" style="--c:${h}" title="${esc(it.names[i])}"></i>`).join('')}</span><span class="of-sr">The combination: ${esc(list(it.names))}.</span>` : '') +
         `<span class="of-idea-w">${esc(it.why)}</span></button><div class="of-idea-a"></div></div>`;
     }
-    // the kinds of idea there are to show now, each with what it says above its cards
-    function sources(I) {
-      const none = { easy: 'Nothing easy to add here.', wada: I.wada.note || 'Nothing in the dictionary for these pieces.' };
-      const lead = { wada: (I.wada.items.length && I.wada.lead ? I.wada.lead + ' ' : '') + (I.wada.items.length ? 'They come from the 1930s and were made for prints and kimono, so here they only go on tops, layers and hats.' : ''),
-        wardrobe: 'Your own pieces, one at a time, with the rest as it is.', pieces: 'The pieces you are trying, one at a time, with the rest as it is.' };
-      const items = { easy: I.easy, wada: I.wada.items, wardrobe: I.wardrobe, pieces: I.pieces };
-      // the dictionary has little for neutrals: when all it has for them is nothing, or one match that is not close, it is left out rather than shown with next to nothing in it
-      const thin = I.wada.neutral && I.wada.items.length < 2 && !I.wada.items.some(x => x.match === 'close');
-      return SOURCES.map(x => ({ id: x[0], label: x[1], items: items[x[0]], lead: lead[x[0]] || '', none: none[x[0]] || '' })).filter(x => (x.items.length || (x.none && I.free.length)) && !(x.id === 'wada' && thin));
-    }
-    // the kind that is showing: the one he chose while it has something, otherwise the first that has
-    const sourceOn = list => { const mine = list.find(x => x.id === S.src && x.items.length), first = list.find(x => x.items.length) || list[0]; return (mine || first || {}).id || null; };
     function vIdeas() {
-      const L = S.look, A = lib(), I = ideaList(), your = s => yourOf(A, s, L[s]), free = I.free, list2 = sources(I), x2 = I.based && secondOf(A, I.based, L[I.based]);
+      const L = S.look, A = lib(), I = ideaList(), your = s => yourOf(A, s, L[s]), free = I.free, x2 = I.based && secondOf(A, I.based, L[I.based]);
       const colourful = I.based && [L[I.based].color, x2 && x2.hex].some(h => h && tone(h, I.based).colour);
       // one short line: what the ideas are built around. With nothing kept that is the most colourful of the big pieces, and the line says how to change it.
       let line = I.based ? `Built around your ${your(I.based)}${colourful ? ', the most colourful piece on' : ''}. “Keep this” on a piece narrows them.`
-        : !free.length ? (allIdeas(I).length ? 'Everything on is kept. Your own pieces can still be swapped in.' : 'Everything is kept, so there is nothing left to suggest. Let a piece go to get ideas for it.')
-        : `Colours for your ${list(free.map(s => noun(s, L[s], true)))}, keeping your ${list(I.locked.map(s => I.locked.length > 1 ? L[s].name || brief(s, L[s]) : your(s)))}.`;
-      // what the ideas leave alone: the small pieces until the rest is kept, and trousers or shoes in a colour of his own choosing (a hat the dictionary has a colour for is not one of them)
-      const touched = s => I.easy.concat(I.wada.items).some(x => x.slots.indexOf(s) >= 0), stay = (I.based ? I.left.filter(s => I.chosen.indexOf(s) >= 0) : I.left).filter(s => !touched(s));
+        : !free.length ? (I.items.length ? 'Everything on is kept. Your own pieces can still be swapped in.' : 'Everything is kept, so there is nothing left to suggest. Let a piece go to get ideas for it.')
+        : `Ideas for your ${list(free.map(s => noun(s, L[s], true)))}, keeping your ${list(I.locked.map(s => I.locked.length > 1 ? L[s].name || brief(s, L[s]) : your(s)))}.`;
+      // what the ideas leave alone: the small pieces until the rest is kept, and trousers or shoes in a colour of his own choosing
+      const touched = s => I.items.some(x => x.slots.indexOf(s) >= 0), stay = (I.based ? I.left.filter(s => I.chosen.indexOf(s) >= 0) : I.left).filter(s => !touched(s));
       if (stay.length && free.length) line += ` Your ${list(stay.map(s => noun(s, L[s], true)))} ${stay.length > 1 || stay[0] !== 'hat' ? 'stay as they are' : 'stays as it is'}${I.based ? '.' : ' until the rest is kept.'}`;
       return '<div class="of-ideas-h"><h3 class="of-h" tabindex="-1" data-q="ideas-h">Colour ideas</h3><span class="of-tag">ideas, not rules</span><span class="of-grow"></span>' +
         '<span class="of-nav" data-q="nav" hidden><button type="button" class="of-nav-b" data-a="slide" data-v="-1" data-fk="slide:-1" aria-label="Earlier ideas" title="Earlier ideas"></button><button type="button" class="of-nav-b of-nav-n" data-a="slide" data-v="1" data-fk="slide:1" aria-label="More ideas" title="More ideas"></button></span>' +
         `<button type="button" class="of-link of-fold" data-a="ideas-fold" data-fk="ideas-fold" aria-expanded="${!!S.ideasOpen}">${S.ideasOpen ? 'Hide' : 'Show'}</button></div>` +
         `<p class="of-hint of-ideas-l">${esc(line)}</p>` +
-        (list2.length ? '<div class="of-srcs" role="tablist" aria-label="Where the ideas come from">' + list2.map(x => `<button type="button" class="of-src" role="tab" data-a="src" data-v="${x.id}" data-fk="src:${x.id}" aria-selected="false" tabindex="-1">${x.label}<span class="of-count">${x.items.length}</span></button>`).join('') + '</div>' +
-          '<div class="of-trying of-trying-in" role="group" aria-label="An idea being tried" data-q="trying" hidden></div>' +
-          list2.map(x => `<div class="of-igrp" data-src="${x.id}" role="tabpanel" aria-label="${x.label}" hidden>${x.lead && x.items.length ? `<p class="of-hint">${esc(x.lead)}</p>` : ''}` +
-            (x.items.length ? `<div class="of-cards">${x.items.map(vIdea).join('')}</div>` : `<p class="of-hint of-igrp-0">${esc(x.none)}</p>`) + '</div>').join('') : '');
+        // one row of cards, six at most: each changes one piece. His own pieces come first, then ordinary things any shop sells, in the colours they are sold in.
+        (I.items.length ? `<div class="of-igrp" role="group" aria-label="Ideas"><p class="of-hint">One piece at a time: your own first, then ordinary things to buy.</p><div class="of-cards">${I.items.map(vIdea).join('')}</div></div>`
+          : free.length ? '<p class="of-hint of-igrp-0">Nothing to suggest for these pieces.</p>' : '');
     }
     const sameDesign = (a, b) => JSON.stringify(a.design || 0) === JSON.stringify(b.design || 0);
     // Is a worn piece exactly the piece p as it is kept (w: p made ready to wear)? Open or done up does not count, nor a width or length that p itself does not give
@@ -11516,16 +11721,12 @@ Length   69  71  72  74"></textarea>
       // Folded away (a narrow page, until "Show" is pressed), they are not worked out or drawn at all: that happens when they are opened.
       R.ideas.classList.toggle('of-ideas-open', !!S.ideasOpen);
       if (ideasFolded() && S.ideasHtml != null) return;
-      const html = vIdeas(), rowNow = () => R.ideas.querySelector('.of-igrp:not([hidden]) .of-cards'), was = rowNow(), at = was ? [was.parentNode.getAttribute('data-src'), was.scrollLeft] : null;
+      const html = vIdeas(), rowNow = () => R.ideas.querySelector('.of-igrp .of-cards'), was = rowNow(), at = was ? was.scrollLeft : 0;
       const redrawn = S.fresh || html !== S.ideasHtml;
       if (redrawn) { S.fresh = false; S.ideasHtml = html; paint('ideas', html, true); }
-      // one kind shows at a time; its small figures are drawn the first time it shows
-      const on = sourceOn(sources(S.got));
-      R.ideas.querySelectorAll('.of-src').forEach(b => { const hit = b.getAttribute('data-v') === on; b.setAttribute('aria-selected', hit); b.setAttribute('tabindex', hit ? '0' : '-1'); });
+      // the small figures are drawn once for each time the cards are
       R.ideas.querySelectorAll('.of-igrp').forEach(g => {
-        const hit = g.getAttribute('data-src') === on;
-        g.hidden = !hit;
-        if (hit && !g.hasAttribute('data-drawn')) { g.setAttribute('data-drawn', ''); g.querySelectorAll('[data-fig]').forEach(n => { const it = ideaAt(n.getAttribute('data-fig')); if (it) thumb(n, it.look); }); pictures(g); }
+        if (!g.hasAttribute('data-drawn')) { g.setAttribute('data-drawn', ''); g.querySelectorAll('[data-fig]').forEach(n => { const it = ideaAt(n.getAttribute('data-fig')); if (it) thumb(n, it.look); }); pictures(g); }
       });
       // every card ends in a line of the same height: "Try it", or the two buttons while it is being tried, or "On now". Nothing below a card moves when it is clicked.
       R.ideas.querySelectorAll('.of-idea').forEach(n => {
@@ -11539,10 +11740,7 @@ Length   69  71  72  74"></textarea>
       });
       // a row that was drawn again stays where he had slid it to, so the card he just used is still in front of him
       const row = rowNow();
-      if (redrawn && row && at && at[0] === on && at[1] > 0) row.scrollLeft = at[1];
-      // an idea being tried whose card is under another kind of idea: a line here says so, and has the two buttons its card would have
-      const tr = Q(R.ideas, 'trying');
-      if (tr) { const lost = !!S.pv && !R.ideas.querySelector('.of-igrp:not([hidden]) .of-idea-try'), html = lost ? tryingHtml(3) : ''; tr.hidden = !lost; if (tr.innerHTML !== html) tr.innerHTML = html; }
+      if (redrawn && row && at > 0) row.scrollLeft = at;
       syncNav();
     }
 
@@ -11590,8 +11788,16 @@ Length   69  71  72  74"></textarea>
       const d = r && AD.name.trim() ? findDesign(lib(), slot, kind, AD.name, r.style, r.colours.length > 1) : null;
       AD.color = (d && d.defaults[0]) || DEF[slot];
     }
+    // A piece being changed stays the garment it is for as long as the kind the form opened with is still the one picked: which trousers they are and how the leg measures,
+    // long sleeves, a cap's second colour and how the piece is made are things the form does not show, so a new name, colour or size must not lose them. (Before 14 Oct 2026
+    // "Update" rebuilt the piece from the form alone: the beige trousers came back as straight jeans.) Another kind picked is another garment, made its own way.
+    const adKept = () => {
+      const w = AD.edit && AD.was && AD.sk === AD.sk0 ? AD.was : null, out = {};
+      if (w) ['kind', 'fit', 'long', 'color2', 'shape'].forEach(k => { if (w[k] != null) out[k] = copy(w[k]); });
+      return out;
+    };
     // the piece being added, as it would be worn (for its picture and for saying what was read)
-    const adItem = () => { const sk = AD.sk.split(':'), d = adDesign(); return wear(Object.assign({ slot: sk[0], kind: sk[1], color: AD.color }, d ? { design: d } : null), o.fits, lib()).item; };
+    const adItem = () => { const sk = AD.sk.split(':'), d = adDesign(); return wear(Object.assign({ slot: sk[0], kind: sk[1], color: AD.color }, adKept(), d ? { design: d } : null), o.fits, lib()).item; };
     function syncAdd() {
       const k = Q(R.add, 'add-k'), c = Q(R.add, 'add-c'), m = Q(R.add, 'add-m'), sayN = Q(R.add, 'add-say'), go = Q(R.add, 'add-go'), A = lib(), F = env().features;
       if (!addable(AD.sk)) AD.sk = AD.sk.split(':')[0] === 'shoes' ? 'shoes:sneaker' : 'top:tee';      // boots, loafers and hats are only offered once the figure can draw them
@@ -11599,9 +11805,12 @@ Length   69  71  72  74"></textarea>
       const slot = AD.sk.split(':')[0], word = colourWord(AD.color), typed = !!AD.name.trim(), noK = typed && !AD.tk && !AD.rk, noC = typed && !AD.tc && !AD.rc, r = AD.r;
       // where it is worn, as a row of words; then every kind worn there, as pictures in the colour chosen, the one picked ticked
       paint('add-slots', slotsShown().map(s => `<button type="button" class="of-chip" data-a="add-slot" data-v="${s}" data-fk="add-slot:${s}" aria-pressed="${s === slot}">${SLOT_NAME[s]}</button>`).join(''));
-      tiles('add-kinds', kindsOf(slot, F).filter(x => addable(slot + ':' + x[0])).map(x => { const as = slot === 'bottom' ? CUT[x[0]] : { kind: x[0] };
+      const kept = adKept();
+      tiles('add-kinds', kindsOf(slot, F).filter(x => addable(slot + ':' + x[0])).map(x => {
+        // (the kind that is picked is pictured and named as the piece being changed, where that is not quite one of the four cuts: straight trousers, not straight jeans)
+        const on = AD.sk === slot + ':' + x[0], own = on && slot === 'bottom' && !!kept.kind && kept.kind !== CUT[x[0]].kind, as = slot === 'bottom' ? (own ? { kind: kept.kind, fit: kept.fit } : CUT[x[0]]) : { kind: x[0] }, word = own ? cap(noun('bottom', as)) : '';
         return { fk: 'add-kind:' + slot + ':' + x[0], cls: 'of-tile of-tile-k', attrs: `data-a="add-kind" data-v="${slot}:${x[0]}"`, th: { s: slot, k: as.kind, d: null, c: [AD.color, null, null], f: as.fit || null, z: 48, x: slot === 'shoes' ? soleOf({ kind: x[0], color: AD.color }) : null },
-          set: { 'aria-pressed': AD.sk === slot + ':' + x[0], 'aria-label': slot === 'shoes' && !F.shoes ? 'Shoes' : x[1] }, cap: slot === 'shoes' && !F.shoes ? 'Shoes' : x[2] || x[1] }; }));
+          set: { 'aria-pressed': on, 'aria-label': slot === 'shoes' && !F.shoes ? 'Shoes' : word || x[1] }, cap: slot === 'shoes' && !F.shoes ? 'Shoes' : word || x[2] || x[1] }; }));
       // the piece as it will go on, in the words a shop would use ("bright red", not a plate name), with "a" or "an" unless it is a pair
       const it = adItem(), d = designOn(A, slot, it), as = piece(A, slot, it, false, shopPlain), pl = /s$/.test(noun(slot, it)), full = (pl ? '' : an(as) + ' ') + as, kw = kindWord(AD.sk);
       // A style the words name that the figure has no design for in this kind, and a second colour with no design to put it in: both are said, so nothing is just dropped.
@@ -11792,6 +12001,13 @@ Length   69  71  72  74"></textarea>
       const w = wear(p, o.fits, lib()), L = copy(view());
       if (w.slot === 'layer') w.item.open = L.layer ? !!L.layer.open : !!(S.lastLayer && S.lastLayer.open);
       L[w.slot] = w.item;
+      // One garment is worn once. A hoodie of his is among his tops and among his layers: put on in one place, it comes off the other. A layer simply comes off; in place of
+      // the top goes the top he had on before it (the last one Undo remembers that is another garment, and not a second hoodie under this one), or failing that a plain tee.
+      const g = w.item.ref != null ? garmentOf(w.item.ref) : null, other = w.slot === 'top' ? 'layer' : w.slot === 'layer' ? 'top' : null, same = t => !!t && t.ref != null && garmentOf(t.ref) === g;
+      if (g && other && same(L[other])) {
+        if (other === 'layer') L.layer = null;
+        else { const was = S.undo.slice().reverse().map(k => k && k.top).find(t => t && !same(t) && !(w.item.kind === 'hoodie' && t.kind === 'hoodie')); L.top = was ? copy(was) : wear({ slot: 'top', kind: 'tee', color: DEF.top }, o.fits, lib()).item; }
+      }
       if (slotsShown().indexOf(w.slot) >= 0) S.slot = w.slot;                    // the piece that has just gone on is the one to carry on with
       commit(L);
       return w;
@@ -11819,8 +12035,7 @@ Length   69  71  72  74"></textarea>
     const afterTry = id => {
       refocus(R.ideas, 'try:' + id);
       if (root.contains(document.activeElement)) return;
-      const src = S.tab === 'dress' && R.ideas.querySelector('.of-src[aria-selected="true"]');
-      if (src) src.focus({ preventScroll: true }); else refocus(root, 'tab:' + S.tab);
+      refocus(root, 'tab:' + S.tab);
     };
     const ACT = {
       open(d) {
@@ -11844,6 +12059,15 @@ Length   69  71  72  74"></textarea>
       },
       // "Something else": the kinds, colours and designs take the place of his own pieces, for trying what he does not own. "Your tops" (and so on) brings his pieces back.
       other(d) { const s = slotsShown().indexOf(d.s) >= 0 ? d.s : S.slot; S.slot = s; S.other[s] = true; repaintSlots(); refocus(root, 'mine:' + s); },
+      // "Pieces to try: 3", beside "Your tops": the pieces he is trying are brought up to just under the figure (or the top of the window), and the keyboard goes to the first
+      'to-tries'() {
+        const n = R['tries-l'], first = R.tries.querySelector('button');
+        if (!n || n.hidden || !n.getClientRects().length) return;
+        const sc = scroller(), win = sc === (document.scrollingElement || document.documentElement);
+        const roof = Math.max((win ? 0 : sc.getBoundingClientRect().top) + (parseFloat(getComputedStyle(sc).scrollPaddingTop) || 0), figFloor());
+        sc.scrollTop += n.getBoundingClientRect().top - roof - 20;      // (the figure's own bar ends a little below the figure)
+        if (first) first.focus({ preventScroll: true });
+      },
       mine(d) { const s = slotsShown().indexOf(d.s) >= 0 ? d.s : S.slot; S.slot = s; S.other[s] = false; if (S.open && S.open !== 'add') S.open = null; repaintSlots(); refocus(root, 'other:' + s); },
       // "Add a piece": the part where a piece he has seen is described, ready for a piece of the kind he was looking at
       'add-piece'(d) {
@@ -11854,7 +12078,6 @@ Length   69  71  72  74"></textarea>
       },
       // "Adjust the fit" opens the two rows that make a top longer, shorter, closer or roomier; it stays as he left it for every piece
       fit() { S.fitOpen = !S.fitOpen; paintSlot(); },
-      src(d) { if (S.src === d.v) return; S.src = d.v; syncIdeas(); },
       // the piece being added: where it is worn, then which kind of thing it is. Chosen by hand, they are no longer read from its name.
       'add-slot'(d) { if (slotsShown().indexOf(d.v) < 0 || AD.sk.split(':')[0] === d.v) return; AD.sk = firstKind(d.v); AD.tk = true; adColour(); syncAdd(); syncPicker(); refocus(root, 'add-slot:' + d.v); },
       'add-kind'(d) { if (!addable(d.v) || AD.sk === d.v) return; AD.sk = d.v; AD.tk = true; adColour(); syncAdd(); syncPicker(); },
@@ -11985,7 +12208,7 @@ Length   69  71  72  74"></textarea>
       surprise() {
         const cur = view(), was = lookKey(cur);
         let L = cur;
-        for (let i = 0; i < 8 && lookKey(L) === was; i++) L = norm(randomLook(cur, S.locks, env(), Math.random), o.fits, lib());
+        for (let i = 0; i < 8 && lookKey(L) === was; i++) L = norm(randomLook(cur, S.locks, Object.assign(env(), { wardrobe: own() }), Math.random), o.fits, lib());
         if (lookKey(L) === was) return;
         commit(L); say('A new look is on the figure. Undo takes you back.');
       },
@@ -12012,7 +12235,7 @@ Length   69  71  72  74"></textarea>
         if (!it || (!S.pv && isOn(it))) return;
         const L = copy(S.look);
         it.slots.forEach(s => {
-          if (it.from === 'wardrobe' || it.from === 'pieces' || !L[s]) { L[s] = copy(it.look[s]); return; }
+          if (it.from === 'wardrobe' || it.from === 'shop' || it.from === 'pieces' || !L[s]) { L[s] = copy(it.look[s]); return; }      // a whole piece, his own or one to buy, goes on as it is
           const n = recolour(L[s], it.look[s].color, true);      // the piece he has on, in the idea's colour and with the design the idea gives it (its own, unless the idea chose another)
           if (it.look[s].design) n.design = copy(it.look[s].design); else delete n.design;
           L[s] = n;
@@ -12020,7 +12243,7 @@ Length   69  71  72  74"></textarea>
         delete L.name;
         S.pv = { id: it.id, look: norm(L, o.fits, lib()), slots: it.slots, title: it.title }; refresh(); say(`Trying ${it.title}. Use this keeps it, Put back undoes it.`);
       },
-      use() { if (!S.pv) return; const id = S.pv.id; commit(S.pv.look); afterTry(id); },
+      use() { if (!S.pv) return; const id = S.pv.id; S.used = ideaAt(id); commit(S.pv.look); afterTry(id); },
       back() { if (!S.pv) return; const id = S.pv.id; S.pv = null; refresh(); afterTry(id); },
       'wear-look'(d) { const k = S.looks.find(x => x.id === d.i); if (k && lookKey(k.look) !== lookKey(view())) { commit(copy(k.look)); say(`Wearing ${k.name || 'the saved look'}.`); } },
       'del-look'(d) {
@@ -12043,7 +12266,8 @@ Length   69  71  72  74"></textarea>
       'edit-piece'(d) {
         const p = S.pieces.find(x => x.id === d.i), n = Q(R.add, 'add-n'), m = Q(R.add, 'add-m');
         if (!p) return;
-        AD = Object.assign(blank(), { name: p.name, sk: p.slot + ':' + (p.slot === 'bottom' ? cutOf(p) : p.kind), color: p.color, tk: true, tc: true, edit: p.id, kept: p.design ? copy(p.design) : null });
+        AD = Object.assign(blank(), { name: p.name, sk: p.slot + ':' + (p.slot === 'bottom' ? cutOf(p) : p.kind), color: p.color, tk: true, tc: true, edit: p.id, kept: p.design ? copy(p.design) : null, was: copy(p) });
+        AD.sk0 = AD.sk;
         n.value = p.name; Q(R.add, 'add-z').value = p.size || '';
         let any = false;
         m.querySelectorAll('input').forEach(i => { const v = p[i.getAttribute('data-m')]; i.value = has(v) ? cm(v) : ''; if (has(v)) any = true; });
@@ -12076,7 +12300,8 @@ Length   69  71  72  74"></textarea>
     // of a change it replaces the piece being changed.
     function addPiece() {
       const sk = AD.sk.split(':'), slot = sk[0], n = Q(R.add, 'add-n'), m = Q(R.add, 'add-m'), name = cap(n.value.trim()).slice(0, 60), editing = AD.edit, guessed = !!name && !AD.tc && !AD.rc, des = adDesign();
-      const p = Object.assign({ id: editing || uid(), name, slot, kind: sk[1], color: AD.color, size: Q(R.add, 'add-z').value }, des ? { design: des } : null);
+      const p = Object.assign({ id: editing || uid(), name, slot, kind: sk[1], color: AD.color, size: Q(R.add, 'add-z').value }, adKept(), des ? { design: des } : null);
+      if (editing && AD.was && AD.was.short && name === AD.was.name) p.short = AD.was.short;      // (the few words under its picture go with the name they shorten)
       if (slot === 'top' || slot === 'layer') m.querySelectorAll('input').forEach(i => { if (has(i.value) && +i.value > 0) p[i.getAttribute('data-m')] = +i.value; });
       const mine = cleanPiece(p), at = editing ? S.pieces.findIndex(x => x.id === editing) : -1, bare = x => JSON.stringify(Object.assign({}, x, { id: 0 }));
       const twin = at < 0 ? S.pieces.find(x => bare(x) === bare(mine)) : null;
@@ -12093,7 +12318,7 @@ Length   69  71  72  74"></textarea>
     }
 
     // ----- events -----
-    const STAY = { slide: 1 };                              // actions that move things on purpose
+    const STAY = { slide: 1, 'to-tries': 1 };               // actions that move things on purpose
     const zone = t => t === 'add' ? R.add : R.slot;
     function onClick(e) {
       const hit = e.target.closest ? e.target.closest('[data-a]') : null, b = hit && root.contains(hit) && hit.getAttribute('aria-disabled') !== 'true' ? hit : null;
@@ -12217,6 +12442,11 @@ Length   69  71  72  74"></textarea>
     EV.forEach(x => root.addEventListener(x[0], x[1], !!x[2]));
     document.addEventListener('click', onDocClick);
 
+    // the piece he already has that a piece from outside is: among his pieces to try (the same in everything but its id), else in his wardrobe (see add(), below); or null
+    const had = p => {
+      const bare = x => JSON.stringify(Object.assign({}, x, { id: 0 })), low = v => String(v == null ? '' : v).trim().toLowerCase();
+      return S.pieces.find(x => bare(x) === bare(p)) || (p.name ? own().find(x => x.slot === p.slot && x.kind === p.kind && (hexOf(x.color) || (Array.isArray(x.colors) && hexOf(x.colors[0]))) === p.color && [low(x.name), low(x.short)].indexOf(low(p.name)) >= 0) : null) || null;
+    };
     paint('add', vAdd());
     collect();
     paintLooks();
@@ -12228,14 +12458,22 @@ Length   69  71  72  74"></textarea>
       set(look) { if (!dead) commit(look); },
       // Pieces to try handed in from outside (a link he opened): each is checked as a piece kept here is, kept at the front of Pieces to try, and the first goes onto the
       // figure. -> how many were taken
+      // A piece he already has is not kept a second time: one that is among his pieces to try exactly as it comes, or one in his wardrobe (worn in the same place, the same
+      // kind and colour, called the same). That piece is the one that goes on.
       add(list) {
         if (dead) return 0;
         const got = arr(list).filter(p => SLOTS.indexOf(p.slot) >= 0 && hexOf(p.color)).map(p => cleanPiece(Object.assign({}, p, { id: uid() })));
         if (!got.length) return 0;
-        got.slice().reverse().forEach(p => S.pieces.unshift(p));
+        const mine = got.map(had);
+        got.slice().reverse().forEach((p, i) => { if (!mine[got.length - 1 - i]) S.pieces.unshift(p); });
         if (S.gone && S.gone.what === 'piece') S.gone = null;
-        S.sig = null; S.piecesHtml = null; S.tab = 'dress'; S.open = null; shutPickers(); putOn(got[0]); persist(true);
+        S.sig = null; S.piecesHtml = null; S.tab = 'dress'; S.open = null; shutPickers(); putOn(mine[0] || got[0]); persist(true);
         return got.length;
+      },
+      // for each of some pieces from outside, as add() would read them: 'try' when it is already among his pieces to try, 'own' when it is a piece of his wardrobe, '' when it is new
+      has(list) {
+        if (dead) return [];
+        return (Array.isArray(list) ? list : []).map(p => { if (!p || typeof p !== 'object' || SLOTS.indexOf(p.slot) < 0 || !hexOf(p.color)) return ''; const x = had(cleanPiece(Object.assign({}, p, { id: uid() }))); return !x ? '' : S.pieces.indexOf(x) >= 0 ? 'try' : 'own'; });
       },
       // keep the look that is on, as "Save this look" does: 'saved', or 'dupe' when that look is already kept (for a page that puts a Save of its own by the figure)
       save() { if (dead) return ''; const n = S.looks.length; ACT.save(); return S.looks.length > n ? 'saved' : 'dupe'; },
@@ -12302,6 +12540,7 @@ Length   69  71  72  74"></textarea>
   // ---------- self-test: the colour maths against published values, the embedded dictionary against its source, and the ideas against their own rules ----------
   function selftest() {
     const checks = [], add = (name, pass, detail) => { checks.push({ name, pass: !!pass, detail: detail == null ? '' : String(detail) }); };
+    const press1 = n => { if (n) n.click(); };
     const guard = (name, f) => { try { f(); } catch (e) { const at = e && e.stack ? /:(\d+):\d+\)?\s*$/m.exec(String(e.stack).split('\n').slice(1, 2).join('')) : null; add(name, false, 'threw: ' + (e && e.message) + (at ? ' (line ' + at[1] + ')' : '')); } };
 
     guard('colour maths', () => {
@@ -12557,16 +12796,16 @@ Length   69  71  72  74"></textarea>
         B1.based === 'top' && B1.free.join() === 'layer' && B1.left.indexOf('bottom') >= 0 && B1.chosen.join() === 'bottom' && B1.easy.concat(B1.wada.items).every(x => x.look.bottom.color === burgundy) && B2.free.join() === 'layer' && B2.easy.concat(B2.wada.items).every(x => x.look.bottom.color === burgundy) &&
         B4.bottom.color === burgundy && B3.free.join() === 'bottom' && B3.easy.length >= 4 && B3.easy.every(x => common(x.look.bottom.color)), `${B1.free.join()} free, ${B1.left.join()} left; then ${B3.easy.map(x => x.title).join('; ')}`);
       // Surprise me
-      let odd = 0, designs = 0, wildUp = 0;
+      // (13 Oct 2026: Surprise me no longer puts a dictionary colour or a design on anything. With no wardrobe to draw on, every piece it changes is a shop garment.)
+      let odd = 0, fancy = 0;
       const rnd = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(23), env = { features: A.features, avatar: A };
       for (let i = 0; i < 300; i++) {
         const from = norm(i % 3 ? loud : striped, null, A), kept = { bottom: i % 5 === 0, hat: false }, L = norm(randomLook(from, kept, env, rnd), null, A);
         if (kept.bottom ? L.bottom.color !== from.bottom.color : !common(L.bottom.color)) odd++;
         if (!common(L.shoes.color)) odd++;
-        if (L.top.design) { designs++; if (!designOn(A, 'top', L.top)) odd++; }
-        if (UPPER.some(s => L[s] && !POOL[s].some(c => c.hex === L[s].color))) wildUp++;
+        SLOTS.forEach(s => { const it = L[s], g = it && SHOP[s].find(x => x.word === noun(s, it, true)); if (it && !(s === 'bottom' && kept.bottom) && (it.design || it.ref != null || it.kind === 'vest' || !g || !g.colours.some(c => c.hex === it.color))) fancy++; });
       }
-      add('Surprise me gives trousers and shoes only the commonly worn colours, in 300 looks; its wilder colours land on a top, a layer or a hat; now and then the top comes in one of the designs the library has for its kind', odd === 0 && designs > 20 && wildUp > 30, `${designs} with a design, ${wildUp} with a dictionary colour up top`);
+      add('Surprise me gives trousers and shoes only the commonly worn colours, in 300 looks; with no wardrobe to draw on, every piece it puts on is an ordinary shop garment, plain, in a colour it is commonly sold in: no design, no vest, no colour out of the dictionary', odd === 0 && fancy === 0, `${odd} odd, ${fancy} that no shop sells`);
       // his own pieces, exactly as given
       const ward = [{ id: 'r1', name: 'Red cords', slot: 'bottom', kind: 'trousers', fit: 'wide', color: scarlet }, { id: 'r2', name: 'Stripe tee', slot: 'top', kind: 'tee', color: navy, design: { id: 'zz-stripes', colors: [navy, rust] } }, { id: 'r3', name: 'Mystery', slot: 'top', kind: 'poncho', color: navy },
         { id: 'r4', name: 'No colour', slot: 'shoes', kind: 'sneaker' }, { id: 'r5', name: 'Old check', slot: 'layer', kind: 'overshirt', color: black, pattern: { kind: 'check', size: 3, color2: white } }];
@@ -12745,7 +12984,7 @@ Length   69  71  72  74"></textarea>
         add('update() with an extended figure library hands it the layer and the shoes, and offers what it can now draw', noWorn && shown.layer && shown.layer.kind === 'jacket' && shown.top.kind !== 'jacket' && shown.shoes && /^#/.test(shown.shoes.sole) &&
           shoeKinds && !!host.querySelector('[data-a="openness"]') && fig.style.getPropertyValue('--av-shoe') === '', '');
         press('[data-a="openness"][data-v="1"]');
-        const other = Array.prototype.find.call(host.querySelectorAll('.of-idea'), n => /^easy:/.test(n.getAttribute('data-idea')) && !n.classList.contains('of-idea-on'));
+        const other = Array.prototype.find.call(host.querySelectorAll('.of-idea'), n => /^shop:/.test(n.getAttribute('data-idea')) && !n.classList.contains('of-idea-on'));
         other.firstChild.click(); press('[data-a="use"]');
         add('and a layer worn open stays open', pg.get().layer.open === true, '');
         add('the two facts are short', /^Jacket .+ than trousers, shirt /.test(host.querySelector('.of-facts').textContent) && host.querySelectorAll('.of-facts li').length <= 2, host.querySelector('.of-facts').textContent);
@@ -12818,13 +13057,12 @@ Length   69  71  72  74"></textarea>
       const ideasBox = $('.of-ideas'), cards0 = $$('.of-idea').filter(seen).length;
       add('the playground opens on the outfit, one part at a time: the pieces and their pictures first, the colour ideas after them, there before anything is kept', $$('.of-tab').length === 4 && panes() === 'dress' && seen(ideasBox) && /^Colour ideas/.test(ideasBox.textContent) && /ideas, not rules/.test(ideasBox.textContent) &&
         /Built around your sage tee, the most colourful piece on/.test($('.of-ideas-l').textContent) && cards0 >= 4 && !$('.of-lock[aria-pressed="true"]') && ideasBox.previousElementSibling === $('[data-r="slot"]') && thumbs.length >= cards0 && thumbs.every(st => st.still && st.view === 'front'), `${cards0} ideas showing`);
-      const srcs = $$('.of-src').map(b => b.getAttribute('data-v')).join();
-      press('.of-src[data-v="wada"]');
-      const wadaOn = $('.of-src[data-v="wada"]').getAttribute('aria-selected') === 'true' && seen($('.of-igrp[data-src="wada"]')) && !seen($('.of-igrp[data-src="easy"]')) && /only go on tops, layers and hats/.test($('.of-igrp[data-src="wada"] .of-hint').textContent);
-      press('.of-src[data-v="easy"]');
+      // (13 Oct 2026: the ideas are one row of cards, not kinds to switch between; the dictionary's combinations are no longer among them)
+      const whose = $$('.of-idea').map(n => n.querySelector('.of-idea-k').textContent), oneRow = $$('.of-igrp').length === 1 && !$('.of-src') && whose.length >= 4 && whose.length <= 6 &&
+        /^(Yours,)*(To buy,)*$/.test(whose.join() + ',') && !/dictionary/i.test($('.of-ideas').textContent);
       act('lock', 'top');
       const lockOn = /, kept$/.test($('.of-ptab[data-v="top"]').getAttribute('aria-label')) && !!$('.of-ptab[data-v="top"] .of-cap .of-i');
-      add('the ideas come as kinds to switch between (easy, the dictionary), the dictionary says where its colours go, and "Keep this" narrows them and puts a small lock on the piece in its row', /^easy,wada/.test(srcs) && wadaOn && /^Colours for your jeans, keeping your sage tee\./.test($('.of-ideas-l').textContent) && lockOn && pg.get().top.color === sage, srcs);
+      add('the ideas are one short row, six at most, each card saying whether its piece is his own or one to buy (his own first), and "Keep this" narrows them and puts a small lock on the piece in its row', oneRow && /^Ideas for your jeans, keeping your sage tee\./.test($('.of-ideas-l').textContent) && lockOn && pg.get().top.color === sage, whose.join());
       act('lock', 'top');
       press('.of-tab[data-v="note"]'); const p1 = panes(); press('.of-tab[data-v="looks"]'); const p2 = panes(); press('.of-tab[data-v="add"]'); const p3 = panes();
       const key = (n, k) => n.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
@@ -12975,14 +13213,14 @@ Length   69  71  72  74"></textarea>
       const rows = () => SLOTS.map(s => { tabTo(s); return ($('.of-own-0') ? $('.of-own-0').textContent : '') + '|' + $$('[data-r="mine"] [data-a="wear-own"]').map(b => b.textContent + ':' + b.querySelector('svg').getAttribute('data-d') + ':' + b.querySelector('svg').getAttribute('data-c')).join(';'); });
       const empty = rows();
       add('with no pieces from the host, each piece\'s card says in one short line that his wardrobe is empty until he adds pieces, and nothing else: nothing is offered as his, no idea comes from a wardrobe, and nothing is said to be owned',
-        empty.every(r => r === 'Your wardrobe is empty until you add pieces.|') && !$('[data-a="wear-own"]') && !$('.of-src[data-v="wardrobe"]') && !/Your (tops|layers|trousers|shoes|hats)/.test(host.textContent) && !$('[data-a="other"]') && !$('[data-a="mine"]') && !/you own this/.test($('.of-note').textContent), empty[0]);
+        empty.every(r => r === 'Your wardrobe is empty until you add pieces.|') && !$('[data-a="wear-own"]') && !$('.of-idea[data-idea^="wardrobe:"]') && !/Your (tops|layers|trousers|shoes|hats)/.test(host.textContent) && !$('[data-a="other"]') && !$('[data-a="mine"]') && !/you own this/.test($('.of-note').textContent), empty[0]);
       const ward = [{ id: 'r2', name: 'Stripe tee', slot: 'top', kind: 'tee', color: navy, design: { id: 'zz-stripes', colors: [navy, rust] } }, { id: 'r1', name: 'Red cords', slot: 'bottom', kind: 'trousers', fit: 'wide', color: scarlet }, { id: 'r3', name: 'Mystery', slot: 'top', kind: 'poncho', color: navy },
         { id: 'r4', name: 'No colour', slot: 'shoes', kind: 'sneaker' }, { id: 'r6', name: 'Team cap', slot: 'hat', kind: 'cap', color: black, design: { id: 'zz-two', colors: [black, rust] } }, { id: 'r7', slot: 'top', kind: 'hoodie', color: black }, null, 'tee'];
       pg.update({ wardrobe: ward });
       const full = rows();
       add('with pieces from the host, each card shows exactly those worn there, under the names and in the kind, colours and design they were given; a piece with no colour, or of a kind that is not worn there, is left out rather than guessed at; a piece with no name is called by what it is',
         full[0] === `|Stripe tee:zz-stripes:${navy},${rust},-;Black hoodie:plain:${black},-,-` && full[1] === 'No layers in your wardrobe yet.|' && full[2] === `|Red cords:plain:${scarlet},-,-` && full[3] === 'No shoes in your wardrobe yet.|' && full[4] === `|Team cap:zz-two:${black},${rust},-` &&
-        $$('.of-src[data-v="wardrobe"]').length === 1, full.join(' / '));
+        $$('.of-idea[data-idea^="wardrobe:"]').length >= 1 && $$('.of-idea[data-idea^="wardrobe:"]').every(n => n.querySelector('.of-idea-k').textContent === 'Yours'), full.join(' / '));
       tabTo('top'); $('[data-a="wear-own"]').click();
       const worn = pg.get().top, owned1 = /you own this/.test($('.of-note li').textContent);
       $('.of-col[data-s="top:2"]').click(); $('.of-pick .of-sw[aria-label="White"]').click();
@@ -12991,6 +13229,10 @@ Length   69  71  72  74"></textarea>
         !changed.ref && !changed.name && !/you own this/.test($('.of-note li').textContent), JSON.stringify(worn.design));
       const I = ideas(pg.get(), {}, { auto: true, avatar: A, wardrobe: ward });
       add('ideas from his wardrobe are those same pieces and no others', I.wardrobe.map(x => x.look[x.slots[0]].ref).sort().join() === 'r1,r2,r6,r7' && I.wardrobe.every(x => x.from === 'wardrobe'), I.wardrobe.map(x => x.title).join('; '));
+      const G = suggest(pg.get(), {}, { auto: true, avatar: A, wardrobe: ward }), gm = G.items.filter(x => x.from === 'wardrobe'), firstShop = G.items.findIndex(x => x.from === 'shop');
+      add('the ideas the page shows: six at most, each changing one piece; his own pieces first, each exactly as given and never the one that is on, then things to buy', G.items.length >= 3 && G.items.length <= 6 && G.items.every(x => x.slots.length === 1 && (x.from === 'wardrobe' || x.from === 'shop')) &&
+        gm.length >= 1 && gm.every(x => ['r1', 'r2', 'r6', 'r7'].indexOf(x.look[x.slots[0]].ref) >= 0 && x.look[x.slots[0]].ref !== pg.get()[x.slots[0]].ref) && (firstShop < 0 || G.items.slice(firstShop).every(x => x.from === 'shop')) &&
+        G.items.filter(x => x.from === 'shop').every(x => { const it = x.look[x.slots[0]]; return !it.design && it.ref == null && !it.name && it.kind !== 'vest'; }), G.items.map(x => x.from + ' ' + x.title).join('; '));
       pg.destroy();
     });
 
@@ -13044,7 +13286,7 @@ Length   69  71  72  74"></textarea>
       const $ = sel => host.querySelector(sel), $$ = sel => host.querySelectorAll(sel), press = sel => { const b = $(sel); if (b) b.click(); return !!b; }, seen = n => !!n && n.getClientRects().length > 0, tabTo = s => press(`.of-ptab[data-v="${s}"]`);
       // his own pieces come first: a grid of pictures, every piece of his wardrobe and then the pieces he is trying; "Something else" is one button away, and one more comes back
       const grid = () => $$('[data-r="mine"] .of-tile-m'), tries = () => $$('[data-r="tries"] .of-tile-m');
-      const one = grid().length === 10 && tries().length === 30 && seen($('[data-r="yours"]')) && !seen($('[data-r="else"]')) && $('[data-r="yours-l"]').textContent === 'Your tops' && seen($('[data-a="other"]')) && seen($('[data-a="add-piece"]')) &&
+      const one = grid().length === 10 && tries().length === 30 && seen($('[data-r="yours"]')) && !seen($('[data-r="else"]')) && $('[data-r="yours-l"]').firstChild.textContent === 'Your tops' && !!$('[data-r="yours-l"] [data-a="to-tries"]') && $('[data-a="to-tries"]').textContent === 'Pieces to try: 30' && seen($('[data-a="other"]')) && seen($('[data-a="add-piece"]')) &&
         Array.prototype.every.call(grid(), b => !!b.querySelector('.of-th svg') && /^(Club shirt|Own hoodie \d)$/.test(b.textContent)) && Array.prototype.every.call(tries(), b => !!b.querySelector('.of-th svg') && /^Piece \d+$/.test(b.textContent)) &&
         !host.querySelector('[data-r="designs"] .of-th svg');      // (the designs, out of sight, are not drawn until they are asked for)
       tries()[25].click();
@@ -13063,8 +13305,8 @@ Length   69  71  72  74"></textarea>
         [one, worn, open, front, few, bare].join());
       // a preview that is carried to another part says so there
       pg.set(plainLook);
-      const key0 = JSON.stringify(pg.get()), idea = () => Array.prototype.find.call($$('.of-igrp:not([hidden]) .of-idea'), n => !n.classList.contains('of-idea-on')), strip = () => $('[data-r="trying"]');
-      press('.of-src[data-v="easy"]');
+      // (the idea tried here is one for the trousers: with ideas that change one piece each, the first card may be for another part of the outfit)
+      const key0 = JSON.stringify(pg.get()), idea = () => Array.prototype.find.call($$('.of-igrp .of-idea'), n => !n.classList.contains('of-idea-on') && /^(shop|wardrobe):bottom=/.test(n.getAttribute('data-idea'))), strip = () => $('[data-r="trying"]');
       idea().firstChild.click();
       const tried = shown.bottom.color, here = !seen(strip()) && tried !== blue && /Put back/.test($('.of-idea-try .of-idea-a').textContent);
       press('.of-tab[data-v="note"]');
@@ -13075,21 +13317,21 @@ Length   69  71  72  74"></textarea>
       const again = seen(strip());
       strip().querySelector('[data-a="use"]').click();
       const used = !seen(strip()) && pg.get().bottom.color === shown.bottom.color && pg.get().bottom.color !== blue;
-      press('.of-tab[data-v="dress"]'); pg.set(plainLook); press('.of-src[data-v="easy"]'); idea().firstChild.click();
-      const other = press('.of-src[data-v="wardrobe"]'), inPanel = seen($('[data-q="trying"]')) && !seen(strip()) && !seen($('.of-idea-try'));
-      press('[data-q="trying"] [data-a="back"]');
-      add('an idea being tried stays on the figure in the other parts, each of which then says so and has "Use this" and "Put back"; in the outfit part its card has them, or a line when that card is out of sight', here && there && put && again && used && other && inPanel && !seen($('[data-q="trying"]')) && JSON.stringify(pg.get()) === key0,
-        [here, there, put, again, used, other, inPanel].join());
-      // the dictionary is left out when all it has is next to nothing for a neutral; the arrows grey out at the ends
-      const I0 = ideas(plainLook, {}, { auto: true, avatar: B, wardrobe: owned, pieces }), thin0 = I0.wada.neutral && I0.wada.items.length < 2 && !I0.wada.items.some(x => x.match === 'close');
-      const wadaTab = !!$('.of-src[data-v="wada"]') === !thin0 && !!$('.of-src[data-v="easy"]');
-      press('.of-src[data-v="easy"]');
-      const prev = $('[data-a="slide"][data-v="-1"]'), next = $('[data-a="slide"][data-v="1"]'), ends = seen(prev) && prev.getAttribute('aria-disabled') === 'true' && next.getAttribute('aria-disabled') === 'false';
+      press('.of-tab[data-v="dress"]');
+      // (13 Oct 2026: the card he used stays in the row, marked as on, though an idea never proposes what is on already)
+      const kept2 = $$('.of-idea-on').length === 1 && /On now/.test($('.of-idea-on .of-idea-a').textContent);
+      pg.set(plainLook); idea().firstChild.click();
+      const inCard = seen($('.of-idea-try')) && $$('.of-idea-try .of-idea-a button').length === 2 && !seen(strip());
+      press('.of-idea-try [data-a="back"]');
+      add('an idea being tried stays on the figure in the other parts, each of which then says so and has "Use this" and "Put back"; in the outfit part its own card has them, and the card of an idea he used stays in the row marked "On now"', here && there && put && again && used && kept2 && inCard && !$('.of-idea-try') && JSON.stringify(pg.get()) === key0,
+        [here, there, put, again, used, kept2, inCard].join());
+      // (13 Oct 2026: with six ideas at most they are a grid, all in sight at once; the arrows that slid a long row along are not shown, and the dictionary is no longer a kind of idea)
+      const cardsBox = $('.of-cards'), inSight = Array.prototype.every.call($$('.of-idea'), n => { const r = n.getBoundingClientRect(), b = cardsBox.getBoundingClientRect(); return r.width >= 120 && r.left >= b.left - 1 && r.right <= b.right + 1; });
+      add('the ideas are a grid with every card in sight at once: nothing runs off the side, so there are no arrows to slide along it', inSight && cardsBox.scrollWidth <= cardsBox.clientWidth + 1 && !seen($('[data-a="slide"]')) && !$('.of-src'), String(inSight));
       pg.set({ top: { kind: 'tee', color: sage }, bottom: jeans, shoes });
-      const back2 = press('.of-src[data-v="wada"]'), hidden2 = $$('.of-igrp:not([hidden]) .of-cards .of-sr');
-      add('with next to nothing for a neutral the dictionary is left out, and it is there for a colour; the arrow at the end the row is at is greyed', wadaTab && ends && back2, [wadaTab, ends, I0.wada.items.length].join());
-      add('the words for screen readers inside an idea card are cut off with the row of cards, so a card out of sight to the right does not make the page scroll sideways', hidden2.length >= 2 && Array.prototype.every.call(hidden2, n => !!n.offsetParent && n.offsetParent.classList.contains('of-cards')), `${hidden2.length} in the row`);
-      press('.of-src[data-v="easy"]');
+      const said2 = Array.prototype.map.call($$('.of-idea'), n => [n.querySelector('.of-idea-k').textContent, n.querySelector('.of-idea-t').textContent]);
+      add('every idea card says whose its piece is and names it plainly; a piece to buy is called what a shop would call it, its colour and what it is ("Olive sweatshirt", "Dark jeans")', said2.length >= 3 && said2.length <= 6 &&
+        said2.every(x => x[0] === 'Yours' || (x[0] === 'To buy' && /^[A-Z][a-z-]*( [a-z-]+)? (tee|shirt|sweatshirt|hoodie|jacket|jeans|trousers|shorts|sneakers|cap|beanie)$/.test(x[1]))), said2.map(x => x.join(': ')).join('; '));
       // names for two looks that would be called the same
       pg.set(striped); press('[data-a="save"]');
       const nA = got.looks[0].name;
@@ -13445,12 +13687,130 @@ Length   69  71  72  74"></textarea>
       add('"Copy a request for Claude" is offered when the page hands over the words for it, and not otherwise', !!ask && !bare.querySelector('[data-a="ask-claude"]'), '');
       p2.destroy(); pg.destroy(); host.remove();
     });
+    guard('what the independent test of the feedback round found (14 Oct 2026)', () => {
+      const wrap = document.createElement('div'), host = document.createElement('div'), A = fake({ features: { layer: true, shoes: true, wide: true, designs: true, hat: true, view: true, legs: true, own: true } });
+      wrap.style.cssText = 'position:absolute;left:-9999px;top:0;width:390px';
+      document.body.appendChild(wrap); wrap.appendChild(host);
+      let got = null;
+      const leg = { leg: { thigh: 31, knee: 25, hem: 22.5 }, inseam: 78, crease: false }, white = '#fbfbf8';
+      const tries = [{ id: 'b-s', name: 'Boxy cropped tee, S', short: 'Boxy tee, S', slot: 'top', kind: 'tee', color: white, chest: 56.5, length: 63, shoulder: 53.5 }, { id: 'b-m', name: 'Boxy cropped tee, M', slot: 'top', kind: 'tee', color: white, chest: 59.5, length: 66 },
+        { id: 'w-t', name: 'White tee', slot: 'top', kind: 'tee', color: white }, { id: 'b-t', name: 'Beige trousers', slot: 'bottom', kind: 'trousers', fit: 'straight', color: '#d6c3a1', shape: leg },
+        { id: 'l-t', name: 'Long-sleeve tee', slot: 'top', kind: 'tee', color: '#222b42', long: true }, { id: 'i-j', name: 'Dark indigo straight jeans', slot: 'bottom', kind: 'jeans', fit: 'straight', color: '#2c3d63' }];
+      const pg = mount(host, { avatar: A, saved: { pieces: tries }, onChange: s => { got = s; } });
+      const $ = sel => host.querySelector(sel), $$ = sel => Array.prototype.slice.call(host.querySelectorAll(sel)), byId = id => got.pieces.find(p => p.id === id);
+      pg.show('add');
+      const ul = () => $('.of-plist'), more = () => $('[data-a="more-pieces"]'), inSight = () => { const r = ul().getBoundingClientRect(); return $$('.of-plist > li').filter(li => { const q = li.getBoundingClientRect(); return q.height > 0 && q.bottom <= r.bottom + 1; }).length; };
+      const h0 = ul().clientHeight, n0 = inSight(), offered = !more().hidden && /Show all 6/.test(more().textContent);
+      more().click();
+      const h1 = ul().clientHeight, n1 = inSight(), fewer = /Show fewer/.test(more().textContent);
+      more().click();
+      add('on a phone "Show all" under Pieces to try opens the whole list, every piece in sight with its pencil and its Remove, and "Show fewer" shuts it to one line again', offered && n0 < 6 && h1 > h0 && n1 === 6 && fewer && ul().scrollHeight <= h1 + 1 && ul().clientHeight === h0, `${h0} px with ${n0} in sight, then ${h1} px with ${n1}`);
+      // the pencil: a new name, colour or size never makes the piece another garment
+      const nameBox = $('.of-add-n'), type = t => { nameBox.value = t; nameBox.dispatchEvent(new Event('input', { bubbles: true })); }, go = () => $('.of-add').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      const edit = id => $(`[data-a="edit-piece"][data-i="${id}"]`).click();
+      edit('b-t');
+      const tile = $('[data-a="add-kind"][aria-pressed="true"]'), shown = tile ? tile.getAttribute('aria-label') : '';
+      type('Beige trousers (to buy)'); go();
+      const t1 = JSON.parse(JSON.stringify(byId('b-t'))), on1 = pg.get().bottom;
+      add('changing only the name of a pair of straight trousers that gives its leg leaves what they are, their cut and their leg as they were; the form pictures them as straight trousers, not straight jeans',
+        t1.name === 'Beige trousers (to buy)' && t1.kind === 'trousers' && t1.fit === 'straight' && JSON.stringify(t1.shape) === JSON.stringify(leg) && on1.kind === 'trousers' && on1.fit === 'straight' && JSON.stringify(on1.shape) === JSON.stringify(leg) && on1.ref === 'b-t' && shown === 'Straight trousers', shown + ' | ' + JSON.stringify(t1));
+      edit('b-s'); $('[data-q="add-z"]').value = 'S'; go();
+      const s1 = byId('b-s');
+      edit('b-s'); type('Uniqlo tee'); go();
+      const s2 = byId('b-s');
+      edit('l-t'); press1($('[data-q="add-c"]')); press1($('.of-pick .of-sw[aria-label="Olive"]')); go();
+      const l1 = byId('l-t');
+      add('a piece changed with the pencil keeps its measurements, its long sleeves and the short name under its picture; a new name takes the short name away with the old one',
+        s1.size === 'S' && s1.short === 'Boxy tee, S' && s1.chest === 56.5 && s1.length === 63 && s1.shoulder === 53.5 && s2.name === 'Uniqlo tee' && !s2.short && s2.chest === 56.5 && l1.long === true && l1.color === staple('Olive').hex && pg.get().top.long === true, JSON.stringify([s1, s2, l1]).slice(0, 300));
+      edit('b-t'); $('[data-a="add-kind"][data-v="bottom:baggy"]').click(); go();
+      const t2 = byId('b-t');
+      edit('i-j'); go();
+      add('another kind picked in the form is another garment: the trousers become baggy jeans and their leg is let go; jeans opened and kept as they are stay jeans', t2.kind === 'jeans' && t2.fit === 'baggy' && !t2.shape && byId('i-j').kind === 'jeans' && byId('i-j').fit === 'straight', JSON.stringify(t2));
+      pg.destroy();
+      // one garment, worn once and offered once: his hoodie is handed over as a top and as a layer under one id, his reversible vest once for each side
+      const grey = staple('Grey marle').hex, navy = staple('Navy').hex, blue = staple('Mid-wash blue').hex, offw = staple('Off-white').hex, black = staple('Black').hex, B = fake({ features: { layer: true, shoes: true, wide: true, designs: true, hat: true, view: true, vest: true } });
+      const hoodie = slot => Object.assign({ id: 'own-h1', name: 'Grey hoodie', slot, kind: 'hoodie', color: grey }, slot === 'layer' ? { shape: { closure: 'none' } } : null), hood2 = slot => ({ id: 'own-h2', name: 'Black hoodie', slot, kind: 'hoodie', color: black });
+      const robe = [{ id: 'own-t1', name: 'White tee', slot: 'top', kind: 'tee', color: white }, { id: 'own-t2', name: 'Navy tee', slot: 'top', kind: 'tee', color: navy }, hoodie('top'), hood2('top'),
+        { id: 'own-j1', name: 'Olive jacket', slot: 'layer', kind: 'jacket', color: staple('Olive').hex }, { id: 'own-v1', name: 'Vest, panelled side', slot: 'layer', kind: 'vest', color: black }, { id: 'own-v1~fleece', name: 'Vest, fleece side', slot: 'layer', kind: 'vest', color: offw },
+        hoodie('layer'), hood2('layer')];
+      const base = { bottom: { kind: 'jeans', fit: 'baggy', color: blue }, shoes: { kind: 'sneaker', color: offw } }, G = r => String(r).split('~')[0];
+      const starts = [Object.assign({ top: { kind: 'hoodie', color: grey, ref: 'own-h1', name: 'Grey hoodie' } }, base), Object.assign({ top: { kind: 'tee', color: white, ref: 'own-t1' }, layer: { kind: 'hoodie', color: grey, ref: 'own-h1', shape: { closure: 'none' } } }, base),
+        Object.assign({ top: { kind: 'tee', color: navy, ref: 'own-t2' }, layer: { kind: 'vest', color: black, ref: 'own-v1' } }, base), Object.assign({ top: { kind: 'tee', color: white, ref: 'own-t1' } }, base), Object.assign({ top: { kind: 'shirt', color: offw } }, base)];
+      let lists = 0, twice = 0, worn = 0, over = 0, flip = 0;
+      starts.forEach(L0 => SLOTS.filter(s => L0[s]).forEach(keep => {
+        const got2 = suggest(L0, { [keep]: true }, { avatar: B, wardrobe: robe }), mineI = got2.items.filter(i => i.from === 'wardrobe'), gs = mineI.map(i => G(i.look[i.slots[0]].ref));
+        lists++;
+        if (gs.some((g, i) => gs.indexOf(g) !== i)) twice++;
+        mineI.forEach(i => { const s = i.slots[0]; if (SLOTS.some(x => x !== s && L0[x] && L0[x].ref != null && G(L0[x].ref) === G(i.look[s].ref))) worn++; if (i.look.layer && i.look.layer.kind === 'hoodie' && i.look.top.kind === 'hoodie') over++; if (i.look[s].ref === 'own-v1~fleece') flip++; });
+        got2.items.filter(i => i.from === 'shop').forEach(i => { if (i.look.layer && i.look.layer.kind === 'hoodie' && i.look.top.kind === 'hoodie') over++; });
+      }));
+      add('among the ideas one garment of his comes up once at most, never while he has it on in another part, and no hoodie goes over a hoodie; the other side of the vest he has on is still an idea', lists === 17 && !twice && !worn && !over && flip > 0, `${lists} lists: ${twice} with a garment twice, ${worn} ideas for a garment already on, ${over} hoodie over hoodie, the vest turned round ${flip} times`);
+      let seed2 = 7, both = 0, hh = 0, looks2 = 0, hisTwo = 0;
+      const rnd2 = () => (seed2 = (seed2 * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 400; i++) {
+        const L0 = starts[i % starts.length], locks = i % 4 === 1 ? { top: true } : i % 4 === 2 && L0.layer ? { layer: true } : {}, R2 = window.Outfit.surprise(L0, locks, { avatar: B, wardrobe: robe }, rnd2);
+        looks2++;
+        if (R2.layer && R2.top.ref != null && R2.layer.ref != null && G(R2.top.ref) === G(R2.layer.ref)) both++;
+        if (R2.layer && R2.layer.kind === 'hoodie' && R2.top.kind === 'hoodie') hh++;
+        if (R2.layer && R2.layer.ref != null && R2.top.ref != null) hisTwo++;
+      }
+      add('a look at random never wears one garment of his twice and never puts a hoodie over a hoodie, whatever is kept; his own layers still go on over his own tops', looks2 === 400 && !both && !hh && hisTwo > 10, `${looks2} looks: ${both} with a garment on twice, ${hh} hoodie over hoodie, ${hisTwo} with a top and a layer both his`);
+      const p3 = mount(host, { avatar: B, wardrobe: robe, saved: { now: { look: starts[3] } }, onChange: s => { got = s; } }), own3 = (slot, name) => { $(`.of-ptab[data-v="${slot}"]`).click(); return $$('[data-r="mine"] [data-a="wear-own"]').find(b => b.getAttribute('aria-label') === name); };
+      own3('top', 'Grey hoodie').click();
+      const asTop = p3.get().top.ref === 'own-h1' && !p3.get().layer;
+      own3('layer', 'Grey hoodie').click();
+      const asLayer = p3.get().layer.ref === 'own-h1' && p3.get().top.ref === 'own-t1' && p3.get().top.kind === 'tee';
+      own3('top', 'Grey hoodie').click();
+      const back = p3.get().top.ref === 'own-h1' && !p3.get().layer;
+      own3('layer', 'Olive jacket').click(); own3('layer', 'Vest, fleece side').click();
+      add('a hoodie of his put on as the layer comes off as the top, and the tee he had on before it goes back under it; put on as the top again, it comes off as the layer; any other layer goes over it as before',
+        asTop && asLayer && back && p3.get().top.ref === 'own-h1' && p3.get().layer.ref === 'own-v1~fleece', [asTop, asLayer, back, p3.get().layer && p3.get().layer.ref].join());
+      p3.destroy();
+      // his own pieces first, with one press to the pieces he is trying when they are a long way down; and no hood to switch on a half-zip
+      const many = [0, 1, 2, 3, 4, 5, 6, 7].map(i => ({ id: 'own-m' + i, name: 'Tee ' + i, slot: 'top', kind: 'tee', color: i % 2 ? navy : white })).concat([{ id: 'own-hz', name: 'Half-zip sweatshirt', slot: 'top', kind: 'hoodie', color: staple('Forest').hex, shape: { collar: 'stand', closure: 'half zip', hood: false } }, hoodie('top')]);
+      const C2 = fake({ features: { layer: true, shoes: true, wide: true, designs: true, hat: true, view: true, hood: true, own: true } });
+      const p4 = mount(host, { avatar: C2, wardrobe: many, saved: { now: { look: starts[4] }, pieces: tries.slice(0, 4) }, onChange: s => { got = s; } });
+      $('.of-ptab[data-v="top"]').click();
+      const jump = $('[data-a="to-tries"]'), words = jump ? jump.textContent : '', heading = $('[data-r="yours-l"]').firstChild.textContent, firstMine = $('[data-r="yours"]').firstElementChild === $('[data-r="yours-l"]') && $('[data-r="mine"]').compareDocumentPosition($('[data-r="tries"]')) === 4;
+      if (jump) jump.click();
+      const landed = document.activeElement === $('[data-r="tries"] button');
+      $('.of-ptab[data-v="bottom"]').click();
+      const noJump = !$('[data-a="to-tries"]') && !$('[data-r="tries"]').hidden;      // (no trousers of his own here, one pair he is trying: nothing to jump over)
+      add('his own pieces still come first; where they run past two rows, "Pieces to try: 3" beside the heading goes straight to the pieces he is trying, and it is not there when they are already in sight',
+        heading === 'Your tops' && words === 'Pieces to try: 3' && firstMine && landed && noJump, [heading, words, firstMine, landed, noJump].join());
+      $('.of-ptab[data-v="top"]').click();
+      const wearMine = name => $$('[data-r="mine"] [data-a="wear-own"]').find(b => b.getAttribute('aria-label') === name).click(), hoodRow = () => !!$('.of-worn[aria-label="Hood"]');
+      wearMine('Half-zip sweatshirt'); const hz = hoodRow();
+      wearMine('Grey hoodie'); const hd = hoodRow();
+      add('a half-zip sweatshirt is offered no hood to switch; a hoodie still is', !hz && hd, [hz, hd].join());
+      p4.destroy();
+      // a piece from a link that he already has is not kept twice
+      const p5 = mount(host, { avatar: C2, wardrobe: [{ id: 'own-j9', name: 'Mutimer Suede jacket', short: 'Suede jacket', slot: 'layer', kind: 'jacket', colors: ['#3e2a21'] }], saved: { now: { look: starts[4] } }, onChange: s => { got = s; } });
+      const linen = { slot: 'top', kind: 'shirt', name: 'Linen camp shirt', color: '#c8b89a', size: 'M', chest: 60, length: 72 }, suede = { slot: 'layer', kind: 'jacket', name: 'suede jacket', color: '#3e2a21' }, other = { slot: 'layer', kind: 'jacket', name: 'Suede jacket', color: '#5a463c' };
+      const hadA = p5.has([linen, suede, other, null]).join();
+      p5.add([linen]); const k1 = got.pieces.length, id1 = got.pieces[0].id;
+      const hadB = p5.has([linen, suede, other]).join();
+      p5.set(starts[4]); p5.add([linen]);
+      const again = got.pieces.length === k1 && p5.get().top.ref === id1;
+      p5.add([suede]);
+      const hisOwn = got.pieces.length === k1 && p5.get().layer.ref === 'own-j9' && p5.get().layer.name === 'Mutimer Suede jacket';
+      p5.add([other]);
+      add('a piece from a link that he already has is put on and not kept a second time: the same piece to try again, or a piece of his own wardrobe by its name, kind and colour; one that only shares a name is new; has() says which is which beforehand',
+        hadA === ',own,,' && hadB === 'try,own,' && again && hisOwn && got.pieces.length === k1 + 1 && p5.get().layer.ref === got.pieces[0].id, [hadA, hadB, again, hisOwn, got.pieces.length].join(' | '));
+      p5.destroy(); wrap.remove();
+    });
     const failed = checks.filter(c => !c.pass);
     return { pass: !failed.length, passed: checks.length - failed.length, failed: failed.length, checks };
   }
 
   window.Outfit = {
-    mount, closest, ideas, selftest,
+    mount, closest, ideas, suggest, selftest,
+    // "Surprise me" as a call, for a page or a script that wants a look at random without the playground: the look given with every piece that is not kept replaced by one of
+    // his own (opts.wardrobe) or an ordinary shop garment. opts: { avatar, fits, wardrobe, features (when there is no avatar) }; rnd: a function like Math.random, to repeat a result.
+    surprise: (look, locks, opts, rnd) => {
+      const o = opts && typeof opts === 'object' ? opts : {}, A = o.avatar && typeof o.avatar === 'object' ? o.avatar : null;
+      return norm(randomLook(norm(look, o.fits, A), locks || {}, { features: (A && A.features) || o.features || {}, avatar: A, fits: o.fits, wardrobe: o.wardrobe }, typeof rnd === 'function' ? rnd : Math.random), o.fits, A);
+    },
     // a design as the playground keeps it, { id, colors: [first, second or null, third or null] }, or null for none: for a host that checks what it stores.
     // main: the piece's own colour (left out, the first of the design's colours)
     design: (d, main) => designOf(d, hexOf(main) || (d && typeof d === 'object' && Array.isArray(d.colors) && hexOf(d.colors[0])) || DEF.top),
@@ -13561,10 +13921,7 @@ const PIECES = [
   { id: 'atelier-polo', slot: 'top', kind: 'polo', brand: 'Atelier 131', name: 'Polo Elegante', size: 'S', colors: ['#2f3644', '#f2efe7'], design: 'tees-contrast-collar', shape: { pockets: ['patch'], collarDepth: 7.5, buttons: 2, buttonColor: '#f2f2f4', pocketSize: [15.5, 14.5] } },
   { id: 'mutimer-suede-jacket', slot: 'layer', kind: 'jacket', brand: 'Mutimer', name: 'Suede jacket', size: 'M', colors: ['#3e2a21'] },
   { id: 'abercrombie-baggy-jeans', slot: 'bottom', kind: 'jeans', brand: 'Abercrombie & Fitch', name: 'Baggy jeans', size: '32x30', colors: ['#6d8bb0'], design: 'bottoms-faded', shape: { fit: 'baggy', leg: { thigh: 28, knee: 26, hem: 25.4 }, inseam: 76.2, rise: 33, stitch: '#7e95a6', metal: '#a0623e' } },
-  { id: 'indigo-straight-jeans', slot: 'bottom', kind: 'jeans', name: 'Dark indigo straight jeans', colors: ['#2c3d63'] },
   { id: 'white-shorts', slot: 'bottom', kind: 'shorts', brand: 'Cotton On', name: 'Carpenter shorts', colors: ['#ece7d8'], shape: { leg: { hem: 27 }, inseam: 27, rise: 31, pockets: ['loop'], stitch: '#c4b6a0', metal: '#423a32' }, was: ['White shorts'] },
-  { id: 'beige-chinos', slot: 'bottom', kind: 'trousers', name: 'Beige chinos', colors: ['#d6c3a1'] },
-  { id: 'white-tee', slot: 'top', kind: 'tee', name: 'White tee', colors: ['#fbfbf8'] },
   { id: 'north-face-puffer', slot: 'layer', kind: 'jacket', brand: 'The North Face', name: 'Hydrenalite down hoodie', size: 'M', colors: ['#1a1a1c', '#f1f1f1'], design: 'outer-jacket-puffer-hood', shape: { hem: 'elastic', pockets: ['welt'], hood: true, baffles: 11.5, bulk: 1 }, measured: { length: 66, sleeve: 68 }, was: ['Puffer'] },
   { id: 'cream-sneakers', slot: 'shoes', kind: 'trainer', brand: 'adidas', name: 'BW Army trainers', colors: ['#f4f4f3', '#a8825e'], shape: { color2: '#cbc7bc' }, was: ['Cream sneakers'] },
   { id: 'asics-gel-kayano-14', slot: 'shoes', kind: 'runner', brand: 'ASICS', name: 'Gel-Kayano 14', size: 'US 9', colors: ['#1a1a1c', '#232324'], shape: { color2: '#c7c8c9', color3: '#96a0a7' } },
@@ -13648,6 +14005,38 @@ const PIECES_WAS = {
 };
 // A starting row for a piece you never owned. It is taken out once, and only while it is still exactly as it was put in.
 const NEVER_OWNED = { id: 'atelier-shirt', brand: 'Atelier 131', item: 'Shirt', size: 'M', kind: 'shirt' };
+// Three more rows that were never yours: each was read off an early photo, and is almost certainly a piece you do own seen a second time (your Alfred's white tee, your
+// Mutimer denim) or one you do not have (the beige trousers). Each is listed here as the first starting list put it in. A row that still says exactly this is taken out of
+// your wardrobe once and offered under "Pieces to try" instead (TRIES, below); one you have rated, starred, renamed, recoloured, given a size or changed in any other
+// way is yours, and stays where it is.
+// (fit: the cut the outfit part drew the row with, which a look that wore it still says)
+const MOVED = { 'white-tee': { slot: 'top', kind: 'tee', item: 'White tee', colors: '#fbfbf8' }, 'beige-chinos': { slot: 'bottom', kind: 'trousers', item: 'Beige chinos', colors: '#d6c3a1', fit: 'wide' },
+  'indigo-straight-jeans': { slot: 'bottom', kind: 'jeans', item: 'Dark indigo straight jeans', colors: '#2c3d63', fit: 'straight' } };
+const MOVED_IDS = Object.keys(MOVED);
+const untouched = o => {
+  const w = MOVED_IDS.includes(o.id) ? MOVED[o.id] : null, colors = Array.isArray(o.colors) ? o.colors.join() : '';
+  return !!w && !o.brand && o.item === w.item && !o.size && o.slot === w.slot && o.kind === w.kind && (colors === w.colors || colors === '') && !o.design && !o.chart && !o.verdict && !o.favourite && !o.tried &&
+    o.linkedBy !== 'you' && !o.long && !o.shape && !o.measured;
+};
+// Pieces to try that come with this page: things you do not own but want to see on your figure. They are kept with the pieces you add yourself (in the Outfit tab, under
+// "Pieces to try" on the card of the part of the outfit each is worn on; "Add a piece" lists them all and can change or remove each one). They are never counted as owned
+// and never used to pick a size. Each goes in once for a browser (sf.tries says which have), so one you remove stays removed.
+// The Uniqlo tee is drawn at its own chart's numbers for each size. was: the row above that the piece takes the place of.
+const boxy = label => { const z = GARMENTS.find(c => c.name === 'Uniqlo Boxy Cropped T-Shirt').sizes.find(s => s.label === label); return { chest: z.chest, length: z.length, shoulder: z.shoulder }; };
+const TRIES = [
+  { id: 'try-uniqlo-boxy-s', name: 'Uniqlo boxy cropped tee, S', short: 'Boxy cropped tee, S', slot: 'top', kind: 'tee', color: '#fbfbf8', ...boxy('S') },
+  { id: 'try-uniqlo-boxy-m', name: 'Uniqlo boxy cropped tee, M', short: 'Boxy cropped tee, M', slot: 'top', kind: 'tee', color: '#fbfbf8', ...boxy('M') },
+  { id: 'try-white-tee', name: 'White tee', slot: 'top', kind: 'tee', color: '#fbfbf8', was: 'white-tee' },
+  // (an ordinary relaxed straight trouser: the leg's own widths, so it is not drawn with the wide cut)
+  { id: 'try-beige-trousers', name: 'Beige trousers', slot: 'bottom', kind: 'trousers', fit: 'straight', color: '#d6c3a1', shape: { leg: { thigh: 31, knee: 25, hem: 22.5 }, inseam: 78, crease: false }, was: 'beige-chinos' },
+  { id: 'try-indigo-jeans', name: 'Dark indigo straight jeans', slot: 'bottom', kind: 'jeans', fit: 'straight', color: '#2c3d63', was: 'indigo-straight-jeans' },
+];
+// A reversible piece is one row in your wardrobe and one piece wherever pieces are counted, and is offered in the Outfit tab once for each side, so either can be put on
+// by name. For each such piece: its two sides, each a design of the figure's, what the side is called, and the colours that go with the piece's own on that side.
+// The row itself is the side its design says; the other side is the same garment, at the same size and measurements, in the other design.
+// Each side has an id of its own that never changes: the first listed here goes by the row's own id (which is what a look kept before the sides were offered wears), the
+// other by "id~side". So a look goes on wearing the side it wore whichever design the row is switched to.
+const SIDES = { 'snakehole-vest': [['outer-vest-panelled', 'panelled side', ['#414140', '#cbcbce']], ['outer-vest-fleece', 'fleece side', ['#f0f0f2']]] };
 
 const load = (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -13691,8 +14080,15 @@ const charts = () => BUILTIN.concat(GARMENTS, custom);
 const plainObject = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const packOwned = list => list.map(o => [o.brand, o.item, o.size, { id: o.id, slot: o.slot, kind: o.kind, colors: o.colors, design: o.design, confirmed: o.confirmed,
   chart: o.chart, verdict: o.verdict, favourite: o.favourite, tried: o.tried, linkedBy: o.linkedBy, ...(o.long === true ? { long: true } : {}), ...(o.shape ? { shape: o.shape } : {}), ...(o.measured ? { measured: o.measured } : {}) }]);
+// (A row from before pieces had ids, a name and nothing else, that is called what one of the three rows read off an early photo was called is that row: it is given the
+// row's id and what it is, so it leaves the wardrobe for the pieces to try as any untouched one does: see MOVED, above.)
+const asMoved = x => {
+  const bare = v => v == null || v === '' || (Array.isArray(v) && !v.length), name = typeof x.item === 'string' ? x.item.trim().toLowerCase() : '';
+  const id = name && ['id', 'brand', 'size', 'slot', 'kind', 'colors', 'design', 'chart', 'verdict', 'favourite', 'tried', 'linkedBy', 'long', 'shape', 'measured'].every(k => bare(x[k]) || x[k] === false) ? MOVED_IDS.find(k => MOVED[k].item.toLowerCase() === name) : null;
+  return id ? Object.assign({}, x, { id, item: MOVED[id].item, slot: MOVED[id].slot, kind: MOVED[id].kind }) : x;
+};
 const unpackOwned = list => (Array.isArray(list) ? list : []).filter(o => o && typeof o === 'object').map(o => {
-  const x = !Array.isArray(o) ? o : Object.assign({}, o[3] && typeof o[3] === 'object' && !Array.isArray(o[3]) ? o[3] : null, { brand: o[0], item: o[1], size: o[2] });
+  const x = asMoved(!Array.isArray(o) ? o : Object.assign({}, o[3] && typeof o[3] === 'object' && !Array.isArray(o[3]) ? o[3] : null, { brand: o[0], item: o[1], size: o[2] }));
   return { id: x.id, brand: x.brand, item: x.item, size: x.size, slot: x.slot, kind: x.kind, colors: x.colors, design: x.design, confirmed: x.confirmed,
     chart: typeof x.chart === 'string' ? x.chart.slice(0, 80) : null, verdict: x.verdict, favourite: x.favourite, tried: x.tried, linkedBy: x.linkedBy, ...(x.long === true ? { long: true } : {}),
     // (the wardrobe checks every field of a shape and of the measurements as it reads the piece, and drops what it does not know)
@@ -13701,10 +14097,15 @@ const unpackOwned = list => (Array.isArray(list) ? list : []).filter(o => o && t
 // The built-in pieces go into the wardrobe once each. Which have been is kept under sf.seeded, so a piece you remove stays removed. A built-in piece only ever fills in what
 // the row it matches does not have yet (what it is, a colour where none is set): nothing you have set or changed is touched, and nothing is added twice.
 // (the piece you never owned stays on that list too: a copy of this page from before 13 Oct 2026, opened in the same browser, would otherwise put its row back)
-const cleanSeeded = v => (Array.isArray(v) ? v : []).filter((x, i, a) => typeof x === 'string' && a.indexOf(x) === i && (x === NEVER_OWNED.id || PIECES.some(p => p.id === x)));
+const cleanSeeded = v => (Array.isArray(v) ? v : []).filter((x, i, a) => typeof x === 'string' && a.indexOf(x) === i && (x === NEVER_OWNED.id || MOVED_IDS.includes(x) || PIECES.some(p => p.id === x)));
 let seeded = cleanSeeded(load('sf.seeded', [])), seedNew = false;      // seedNew: the built-in pieces changed the list just now, so it is saved once the page is drawn
-// Which built-in wardrobe this browser has had (sf.seedv): 1 the first starting list of 21 (or nothing yet), 2 your whole wardrobe. Going from 1 to 2 happens once (below).
-let seedv = load('sf.seedv', 1) === 2 ? 2 : 1;
+// Which built-in wardrobe this browser has had (sf.seedv): 1 the first starting list of 21 (or nothing yet), 2 your whole wardrobe, 3 your wardrobe less the three rows that
+// were never yours (MOVED). Each step happens once (below).
+const cleanSeedv = v => v === 3 ? 3 : v === 2 ? 2 : 1;
+let seedv = cleanSeedv(load('sf.seedv', 1));
+// Which of the pieces to try that come with this page this browser has had (sf.tries). triesNew: some went in just now.
+const cleanTried = v => (Array.isArray(v) ? v : []).filter((x, i, a) => typeof x === 'string' && a.indexOf(x) === i && TRIES.some(t => t.id === x));
+let tried = cleanTried(load('sf.tries', []));
 // Where each piece first came from: the first starting list, then each wardrobe file in turn. A browser that holds a piece from one of those files has loaded that file, so a
 // piece of the same file or an earlier one that it does not hold is one you removed. (A piece named in none of these came with the first file.)
 const FIRST_PIECES = 'atelier-tee atelier-polo mutimer-suede-jacket abercrombie-baggy-jeans indigo-straight-jeans white-shorts beige-chinos white-tee north-face-puffer cream-sneakers asics-gel-kayano-14 camo-cap snakehole-hoodie snakehole-vest turtle-co-shorts alfreds-tee alfreds-button-up thrills-jorts thrills-shirt uniqlo-airism-tee'.split(' ').concat(NEVER_OWNED.id);
@@ -13755,6 +14156,12 @@ const withPieces = list => {
     list = list.filter(o => !neverOwned(o));      // (the row for a piece you never owned, while it is still as it was put in)
     if (!seeded.includes(NEVER_OWNED.id)) seeded = seeded.concat(NEVER_OWNED.id);
     seedv = 2; seedNew = true;
+  }
+  if (seedv < 3) {
+    // (13 Oct 2026) the three rows that were never yours, each while it is still exactly as it was put in: they are offered as pieces to try from now on (withTries)
+    list = list.filter(o => !untouched(o));
+    MOVED_IDS.forEach(id => { if (!seeded.includes(id)) seeded = seeded.concat(id); });
+    seedv = 3; seedNew = true;
   }
   return list;
 };
@@ -13891,21 +14298,78 @@ const ownNote = (b, r) => {
 };
 
 const openWhy = new Map();      // which "why" panels are open, by chart name, so typing a number does not shut them
-// "Find a brand": only the brands whose names hold every word typed are left in sight. Nothing about a size changes; the box is emptied by a reload.
+const openBrands = new Set();   // which brands are open, by name, for the same reason
+// Each chart belongs to a brand. The page's own charts are these brands'; a chart you add is filed under one of them, or under the brand of a piece you own, when its name
+// starts with that brand's; otherwise under its own name with the kind of garment taken off the end ("Nike tops" is Nike; "Carhartt-style trousers" is Carhartt-style).
+const CHART_BRANDS = ['Thrills', 'Abercrombie & Fitch', 'Uniqlo', 'The North Face', 'ASICS', 'Atelier 131', 'Alfred\'s Apartment', 'Mutimer', 'Five by Flynn', 'Rusty', 'Snake Hole'];
+const KIND_TAIL = /\s+(?:(?:men'?s|women'?s|unisex)\s+)?(?:tops?|bottoms|tees?|t-?shirts?|polos?|shirts?|hoodies?|jumpers?|sweatshirts?|sweaters?|knits?|jackets?|coats?|jeans|pants|trousers|chinos|shorts|shoes|sneakers|trainers|boots)\b.*$/i;
+const knownBrands = () => CHART_BRANDS.concat(owned.map(o => o.brand).filter(b => typeof b === 'string' && brandKey(b).length >= 3)).filter((b, i, a) => a.findIndex(x => brandKey(x) === brandKey(b)) === i)
+  .sort((a, b) => brandKey(b).length - brandKey(a).length);      // (the longest first, so the fullest name that fits is the one taken)
+const brandOf = (name, known) => { const n = String(name).trim(), key = brandKey(n); return known.find(b => key.indexOf(brandKey(b)) === 0) || n.replace(KIND_TAIL, '').trim() || n; };
+// a chart's own name under its brand: what is left of its name after the brand's ("Trusted Tee", "Tops"), '' when nothing is
+const shortOf = (name, brand) => {
+  const want = brandKey(brand);
+  let i = 0, got = '';
+  while (i < name.length && got.length < want.length) got += brandKey(name[i++]);
+  const rest = got === want ? name.slice(i).trim() : name;
+  return rest.charAt(0).toUpperCase() + rest.slice(1);
+};
+// what a chart sizes, in a word or two for the line under a brand's name: "tees", "jeans", "tops and jackets"
+const kindOfChart = (b, short) => b.cat ? (b.cat === 'tee' ? (b.kind === 'polo' ? 'polos' : 'tees') : b.cat === 'shirt' ? 'shirts' : b.cat === 'hoodie' ? 'hoodies' : b.cat === 'jacket' ? 'jackets'
+    : /jean/i.test(b.name) ? 'jeans' : /short/i.test(b.name) ? 'shorts' : 'trousers')
+  : short.replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s*&\s*/g, ' and ').trim().toLowerCase() || (b.sizes.some(z => z.foot) ? 'shoes' : b.sizes.some(z => z.chest) ? 'tops' : 'bottoms');
+const listOf = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+const KIND_ORDER = ['tops', 'tees', 'polos', 'shirts', 'hoodies', 'jackets'];
+// Your sizes in one brand, as short as they can be said: each size once, large, with what it is your size in ("M tees, shirts and hoodies", "32 jeans"). Where the charts
+// of one kind disagree, the kind goes with the size most of them give and the chart that differs is named with its own ("L Vintage Button Down").
+// A size is said in the words its own chart inside says it in: "M" when it is plain, "34?" or "S or M" when the page cannot tell for sure (x.said). After the kinds, where
+// you own a piece on one of those charts in another size than the one picked, a quiet word says so ("you own S").
+const sizesOfBrand = g => {
+  const chips = [], chip = size => chips.find(c => c.size === size) || chips[chips.push({ size, words: [], rows: [], own: [] }) - 1], kinds = [];
+  g.rows.forEach(x => { if (x.r && !kinds.includes(x.kind)) kinds.push(x.kind); });
+  // (what is worn on top first, then the legs, then the feet: "tops, tees and bottoms")
+  const place = k => { const i = KIND_ORDER.indexOf(k); return i >= 0 ? i : /shoe|sneaker|boot/.test(k) ? 90 : /bottom|jean|trouser|pant|short/.test(k) ? 80 : 50; };
+  kinds.sort((a, b) => place(a) - place(b));
+  kinds.forEach(kind => {
+    const list = g.rows.filter(x => x.r && x.kind === kind), seen = [];
+    list.forEach(x => { const s = seen.find(q => q[0] === x.said); if (s) s[1]++; else seen.push([x.said, 1]); });
+    const main = seen.slice().sort((a, b) => b[1] - a[1])[0][0];
+    list.forEach(x => {
+      const c = chip(x.said), word = x.said !== main ? x.short || kind : kind;
+      c.rows.push(x); if (x.said !== main || !c.words.includes(kind)) c.words.push(word);
+      x.have.forEach(z => { if (z !== String(x.r.label) && !c.own.some(q => q[0] === z && q[1] === word)) c.own.push([z, word]); });
+    });
+  });
+  return chips.length ? chips.map(c => {
+    // (one kind on the line: "you own S"; several: "you own S in shirts")
+    const sizes = c.own.map(q => q[0]).filter((z, i, a) => a.indexOf(z) === i), own = sizes.map(z => c.words.length < 2 ? z : `${z} in ${listOf(c.own.filter(q => q[0] === z).map(q => q[1]))}`);
+    return `<span class="sz-chip"><span class="size${c.rows.every(x => x.maybe) ? ' maybe' : ''}"${c.rows.every(x => x.maybe) ? ' title="Can’t tell for sure"' : ''}>${esc(c.size)}</span><span>${esc(listOf(c.words))}${own.length ? `<span class="sz-own">you own ${esc(listOf(own))}</span>` : ''}</span></span>`;
+  }).join('') : '<span class="sz-chip">No size could be picked</span>';
+};
+// "Find a brand": only the brands whose names, or whose charts' names, hold every word typed are left in sight. Nothing about a size changes; the box is emptied by a reload.
 const findSizes = () => {
   const words = document.getElementById('sizeFind').value.toLowerCase().split(/\s+/).filter(Boolean), none = document.getElementById('sizeNone');
   let n = 0;
-  document.querySelectorAll('#results tbody.brand').forEach(t => { const hit = words.every(w => t.dataset.name.includes(w)); t.hidden = !hit; if (hit) n++; });
+  document.querySelectorAll('#results .sz-brand').forEach(t => { const hit = words.every(w => t.dataset.name.includes(w)); t.hidden = !hit; if (hit) n++; });
+  document.querySelectorAll('#results .sz-rest').forEach(t => { t.hidden = words.length > 0; });
   none.hidden = n > 0 || !words.length;
   none.textContent = n || !words.length ? '' : `No brand here is called “${document.getElementById('sizeFind').value.trim()}”. “Add a brand” takes a size chart for one.`;
 };
-document.getElementById('sizeFind').addEventListener('input', findSizes);
+document.getElementById('sizeFind').addEventListener('input', () => { sizeSay(''); findSizes(); });      // (a line about a chart just added or removed goes once you look for something else)
+// (a brand that is opened stays open when the list is drawn again; the reasons inside it keep their own record, above)
+document.getElementById('results').addEventListener('toggle', e => {
+  const d = e.target;
+  if (d && d.classList && d.classList.contains('sz-brand')) { if (d.open) openBrands.add(d.dataset.brand); else openBrands.delete(d.dataset.brand); }
+}, true);
+const sizeSay = t => { const n = document.getElementById('sizeMsg'); n.textContent = t || ''; n.hidden = !t; };
+// The Sizes tab: one short entry for each brand, the brands you own pieces from first (the ones you own most of leading), then the rest. Each is the brand's name and your
+// sizes in it. Opened, it shows its charts: for each the size picked, the short note, how sure, and "Why this size?", exactly as each chart's own row always said them.
 const renderResults = function () {
-  const built = BUILTIN.concat(GARMENTS), all = built.concat(custom);
+  const built = BUILTIN.concat(GARMENTS), all = built.concat(custom), known = knownBrands();
   const why = all.map(b => SizeLogic.explain(b, { me, wear: prefs, fitShift: fit }));
   const rows = all.map((b, idx) => {
     const isCustom = idx >= built.length, r = b.cat ? pickGarment(b) : pick(b), ex = why[idx];
-    // The line under each row says why, once. Notes keep only what it does not say: a warning, what you own, and the brand's own note.
+    // The line under each chart says why, once. Notes keep only what it does not say: a warning, what you own, and the brand's own note.
     const notes = [];
     if (r && r.notes.some(n => n.includes('too cropped')) && !/cropped/i.test(ex.summary)) notes.push('<b>Likely too cropped for you.</b>');
     const have = ownNote(b, r);
@@ -13914,21 +14378,37 @@ const renderResults = function () {
     // When the answer is a toss-up or a long way off, the size is drawn as a question, not as a firm answer. The size itself is the same.
     // "S or M" when the line under the row says it is between the two, "M?" when even the closest size is a long way off.
     const other = r && ex.cantTell && Array.isArray(ex.between) && String(ex.summary).indexOf('Between ') === 0 ? ex.between.find(l => l !== r.label) : null;
-    const size = !r ? '–' : `<span class="size${ex.cantTell ? ' maybe' : ''}" data-size="${esc(r.label)}"${ex.cantTell ? ' title="Can’t tell for sure"' : ''}>${esc(r.label)}${!ex.cantTell ? '' : other ? ` or ${esc(other)}` : '?'}</span>`;
+    // (each chart's size says which chart it is for, data-chart, and what it is, data-size: the one place on the page a chart's size is written)
+    const said = !r ? '–' : `${r.label}${!ex.cantTell ? '' : other ? ` or ${other}` : '?'}`;      // the size in words, here and on the brand's own line
+    const size = !r ? `<span data-chart="${esc(b.name)}" data-size="–">–</span>`
+      : `<span class="size${ex.cantTell ? ' maybe' : ''}" data-chart="${esc(b.name)}" data-size="${esc(r.label)}"${ex.cantTell ? ' title="Can’t tell for sure"' : ''}>${esc(said)}</span>`;
+    // the sizes you own on this chart, as the chart calls them ("32x30" is its 32): for the quiet word on the brand's line
+    const mineOn = [];
+    if (b.cat) owned.forEach(o => { const m = o.chart === b.name ? onChart(o) : null; if (m && m.label != null && !mineOn.includes(String(m.label))) mineOn.push(String(m.label)); });
     const del = isCustom ? ` <button class="ghost" data-del-chart="${idx - built.length}" aria-label="Remove ${esc(b.name)}">Remove</button>` : '';
-    // (each brand is a block of two rows, so "Find a brand" can put a whole brand away, and a phone can draw it as a card)
-    return `<tbody class="brand" data-name="${esc(String(b.name).toLowerCase())}"><tr class="joined"><td>${esc(b.name)}<span class="tag">${b.cat ? 'garment' : 'body'}</span>${isCustom ? '<span class="tag">added</span>' : ''}${del}</td>
-      <td>${size}</td><td class="note">${notes.join(' ')}</td></tr>
-      <tr class="under"><td colspan="3"><div data-why="${idx}"></div></td></tr></tbody>`;
+    const brand = brandOf(b.name, known), short = shortOf(String(b.name).trim(), brand), kind = kindOfChart(b, short);
+    return { b, r, brand, short, kind, said, have: mineOn, maybe: !!(r && ex.cantTell),
+      html: `<div class="sz-chart"><div class="sz-c-head"><span class="sz-c-name" title="${esc(b.name)}">${esc(short || kind.charAt(0).toUpperCase() + kind.slice(1))}<span class="tag">${b.cat ? 'garment' : 'body'}</span>${isCustom ? '<span class="tag">added</span>' : ''}${del}</span>` +
+        `${size}</div><p class="note">${notes.join(' ')}</p><div data-why="${idx}"></div></div>` };
   });
-  const table = document.getElementById('results');
-  table.innerHTML = '<thead><tr class="head"><th>Brand</th><th>Your size</th><th>Notes</th></tr></thead>' + rows.join('');
+  const brands = [];
+  rows.forEach(x => {
+    let g = brands.find(q => brandKey(q.name) === brandKey(x.brand));
+    if (!g) brands.push(g = { name: x.brand, rows: [], own: owned.filter(o => !o.tried && o.brand && brandKey(o.brand) === brandKey(x.brand)).length });
+    g.rows.push(x);
+  });
+  brands.sort((a, b) => b.own - a.own);      // (brands level with each other keep the order of their charts)
+  const one = g => `<details class="sz-brand" data-brand="${esc(g.name)}" data-name="${esc((g.name + ' ' + g.rows.map(x => x.b.name).join(' ')).toLowerCase())}"${openBrands.has(g.name) ? ' open' : ''}>` +
+    `<summary><span class="sz-b-name">${esc(g.name)}</span><span class="sz-b-sum">${sizesOfBrand(g)}</span><span class="sz-cue" aria-hidden="true"></span></summary>` +
+    `<div class="sz-charts">${g.rows.map(x => x.html).join('')}</div></details>`;
+  const mine = brands.filter(g => g.own > 0), rest = brands.filter(g => !g.own), box = document.getElementById('results');
+  box.innerHTML = mine.map(one).join('') + (mine.length && rest.length ? '<p class="sz-rest">Other brands</p>' : '') + rest.map(one).join('');
   findSizes();
-  // Why this size: closed until it is opened, and still open after the table is redrawn.
-  table.querySelectorAll('[data-why]').forEach(el => {
+  // Why this size: closed until it is opened, and still open after the list is redrawn.
+  box.querySelectorAll('[data-why]').forEach(el => {
     const i = +el.dataset.why, name = String(all[i].name), was = openWhy.get(name) || { open: false, sizes: [] };
     openWhy.set(name, was);
-    // lead: false, because the size is already in the row above this line
+    // lead: false, because the size is already in the line above this one
     SizeLogic.renderExplain(el, why[i], { lead: false, open: was.open, openSizes: was.sizes, onToggle: (open, sizes) => { was.open = open; was.sizes = sizes; } });
   });
   drawFigure();
@@ -14079,8 +14559,52 @@ const figureCan = k => !!window.Avatar && typeof Avatar[k] === 'function';
 // (a striped tee and a checked shirt), which the tee and shirt designs already cover. The library still draws those two for anything that names them.
 const SAMPLE_DESIGNS = ['tee-stripes', 'shirt-plaid'];
 const designsFor = (slot, kind) => Avatar.designs(slot, kind).filter(d => !SAMPLE_DESIGNS.includes(d.id));
+
+// ---------- A probable size for a piece with none ----------
+// For a piece you own that has no size written down, the wardrobe shows a probable one, as a guess and never as a fact: "Probably M", with Yes (which writes it down as the
+// piece's size) and Change. Where it comes from, in this order: the size this page picks for you on that brand's own chart, where it has one for that kind of garment;
+// otherwise the size you wear most in the pieces of that kind whose size you have given; otherwise your usual size for the kind. It is worked out as the wardrobe is drawn
+// and kept nowhere: until you press Yes the piece has no size, so a guess never reaches the sizes picked for you, the ranges, the wardrobe's own check, a drawing or a file.
+const USUAL_SIZE = { tee: 'M', hoodie: 'M', shirt: 'S', jacket: 'M', vest: 'S', bottoms: '32', pull: 'M', shoes: 'US 9', hat: 'One size' };
+const SIZE_KIND = { tee: 'tees', hoodie: 'hoodies and sweatshirts', shirt: 'shirts', jacket: 'jackets', vest: 'vests', bottoms: 'trousers and shorts', pull: 'pull-on trousers and shorts', shoes: 'shoes', hat: 'hats' };
+// which sizes a piece is compared with: its kind, with polos among the tees, an overshirt among the shirts, and trousers or shorts with an elastic waist (sized S, M, L) apart
+const sizeKind = o => o.slot === 'shoes' ? 'shoes' : o.slot === 'hat' ? 'hat' : o.slot === 'bottom' ? (plainObject(o.shape) && o.shape.waist === 'elastic' ? 'pull' : 'bottoms')
+  : o.kind === 'polo' ? 'tee' : o.kind === 'overshirt' ? 'shirt' : ['tee', 'shirt', 'hoodie', 'jacket', 'vest'].includes(o.kind) ? o.kind : null;
+// a size as it is said: "32x30" is a 32 in trousers, "m" is an M
+const sizeSaid = (kind, size) => { const s = String(size == null ? '' : size).replace(/\s+/g, ' ').trim(), m = /^w?\s*(\d{2})\s*(?:[x×\/]\s*l?\s*\d{2})?$/i.exec(s); return (kind === 'bottoms' || kind === 'pull') && m ? m[1] : /^[a-z0-9]{1,4}$/i.test(s) ? s.toUpperCase() : s; };
+const brandKey = s => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, '');
+// The chart here for a piece's brand and kind of garment: its own chart where it has one, else a garment chart of that kind, else a chart of your body whose name says what
+// it is for ("tops", "jeans", "shoes"). null when the brand has none.
+const SIZE_CAT = { tee: 'tee', shirt: 'shirt', hoodie: 'hoodie', jacket: 'jacket', bottoms: 'bottoms', pull: 'bottoms' };
+const SIZE_WORDS = { shoes: /\b(shoes?|sneakers?|boots?)\b/, hat: /\b(hats?|caps?)\b/, bottoms: /\b(bottoms|jeans|pants|trousers|shorts)\b/, pull: /\b(bottoms|pants|trousers|shorts)\b/ };
+const chartFor = (o, kind) => {
+  const b = brandKey(o.brand), mine = b.length < 3 ? [] : charts().filter(c => brandKey(c.name).indexOf(b) === 0), words = SIZE_WORDS[kind] || /\b(tops?|tees?|shirts?|hoodies?|jackets?)\b/;
+  return (o.chart && mine.find(c => c.name === o.chart)) || mine.find(c => c.cat && c.cat === SIZE_CAT[kind]) || mine.find(c => !c.cat && words.test(String(c.name).toLowerCase())) || null;
+};
+// Shoe brands whose own sizes are not US ones: a probable shoe size is still your usual US size, and the reason says the brand sizes in something else.
+const SHOE_SIZING = { birkenstock: 'EU', kleman: 'EU', veja: 'EU', rmwilliams: 'UK', drmartens: 'UK', blundstone: 'UK', clarks: 'UK' };
+// -> the function the wardrobe is handed: piece => { size, why, say } or null
+const sizeGuesser = () => {
+  const tally = {};
+  owned.forEach(o => { const k = sizeKind(o), s = k && !o.tried && o.size ? sizeSaid(k, o.size) : ''; if (s) (tally[k] = tally[k] || {})[s] = (tally[k][s] || 0) + 1; });
+  const most = k => { const t = tally[k]; if (!t) return null; const n = Math.max(...Object.values(t)), top = Object.keys(t).filter(s => t[s] === n); return top.includes(USUAL_SIZE[k]) ? USUAL_SIZE[k] : top[0]; };
+  const count = k => Object.values(tally[k] || {}).reduce((a, n) => a + n, 0);      // how many pieces of that kind have a size written down
+  // (the kinds whose usual size is one you gave yourself; for the others a single piece is all there is to go on, and the reason says so)
+  const GIVEN = ['tee', 'hoodie', 'shirt', 'bottoms', 'shoes', 'hat'], ONE = { jacket: 'jacket', vest: 'vest', pull: 'pull-on pair' };
+  return o => {
+    const k = o && !o.size && !o.tried ? sizeKind(o) : null;
+    if (!k) return null;
+    const c = chartFor(o, k), r = c ? (c.cat ? pickGarment(c) : pick(c)) : null, label = r && r.label ? String(r.label) : '';
+    if (label) return { size: (k === 'shoes' && /\bUS\b/.test(c.name) && /^\d/.test(label) ? 'US ' : '') + label, why: `Your size on the Sizes page for ${c.name}.` };
+    const m = most(k), size = m || USUAL_SIZE[k], theirs = k === 'shoes' ? SHOE_SIZING[brandKey(o.brand)] : '';
+    return { size, say: size === 'One size' ? 'one size' : size, why: k === 'hat' && !m ? 'Caps and hats mostly come in one size.'
+      : theirs ? `Your usual shoe size. ${String(o.brand).trim()} sizes in ${theirs}, so check the label before you say yes.`
+      : m && count(k) === 1 && !GIVEN.includes(k) ? `Going by the one ${ONE[k] || 'piece like it'} of yours that has a size.`
+      : m && count(k) > 1 ? `The size you wear most in your ${SIZE_KIND[k]}.` : `Your usual size in ${SIZE_KIND[k]}.` };
+  };
+};
 const renderOwned = function () {
-  Wardrobe.render(document.getElementById('wardrobeBox'), { items: owned, charts: charts(), wear: prefs, wearDefaults: typed, fitShift: fit,
+  Wardrobe.render(document.getElementById('wardrobeBox'), { items: owned, charts: charts(), wear: prefs, wearDefaults: typed, fitShift: fit, guessSize: sizeGuesser(),
     thumb: figureCan('thumb') ? (el, o) => Avatar.thumb(el, o) : undefined, designs: figureCan('designs') ? designsFor : undefined,
     // (one set of colours and one word for each, in both tabs: the outfit part's)
     palette: window.Outfit && Outfit.colours && Array.isArray(Outfit.colours.staples) ? Outfit.colours.staples : undefined,
@@ -14186,19 +14710,30 @@ document.getElementById('reset').addEventListener('click', () => {
   document.getElementById('starMsg').textContent = STAR_HINT;
   syncStars(true); rewear(); renderMeasures(); renderResults(); renderOwned();
 });
+// "Add a brand", beside the heading, opens the form for a new chart under it; until then the form is not on the page. Close, or a chart added, puts it away again.
+const chartForm = document.getElementById('secChart'), chartBtn = document.getElementById('toChart');
+const showChartForm = on => {
+  chartForm.hidden = !on; chartBtn.setAttribute('aria-expanded', on);
+  if (!on) return;
+  document.getElementById('cMsg').textContent = ''; sizeSay('');
+  chartForm.scrollIntoView({ block: 'nearest' });
+  document.getElementById('cName').focus({ preventScroll: true });
+};
+chartBtn.addEventListener('click', () => showChartForm(chartForm.hidden));
+document.getElementById('cClose').addEventListener('click', () => { showChartForm(false); chartBtn.focus(); });
 document.getElementById('cAdd').addEventListener('click', () => {
   const name = document.getElementById('cName').value.trim(), msg = document.getElementById('cMsg');
   const kind = document.getElementById('cKind').value;
   const sizes = parseChart(document.getElementById('cText').value, +document.getElementById('cUnit').value, kind !== 'body');
   if (!name || !sizes) { msg.textContent = 'Needs a name and a chart with sizes and at least a chest or waist row.'; return; }
-  custom.push(kind === 'body' ? { name, sizes } : { name, sizes, cat: kind }); save('sf.charts', custom); relink(); refresh();
-  msg.textContent = `Added ${name}.`;
+  const brand = brandOf(name, knownBrands());
+  custom.push(kind === 'body' ? { name, sizes } : { name, sizes, cat: kind }); save('sf.charts', custom);
+  openBrands.add(brand); document.getElementById('sizeFind').value = '';      // the new chart is shown: its brand is opened, and nothing typed in "Find a brand" hides it
+  relink(); refresh();
   document.getElementById('cName').value = ''; document.getElementById('cText').value = '';
-});
-// The form for a new chart is at the foot of the Sizes tab, under every brand. The button beside the heading brings it into view and puts the keyboard in its first box.
-document.getElementById('toChart').addEventListener('click', () => {
-  document.getElementById('secChart').scrollIntoView({ block: 'start' });
-  document.getElementById('cName').focus({ preventScroll: true });
+  showChartForm(false); sizeSay(`Added ${name}. It is under ${brand}, open below.`);
+  const d = Array.prototype.find.call(document.querySelectorAll('#results .sz-brand'), x => x.dataset.brand === brand);
+  if (d) { d.querySelector('summary').focus({ preventScroll: true }); d.scrollIntoView({ block: 'nearest' }); }
 });
 document.addEventListener('click', e => {
   const c = e.target && e.target.dataset ? e.target.dataset.delChart : undefined;
@@ -14209,7 +14744,7 @@ document.addEventListener('click', e => {
   if (!custom.some(x => x.name === gone.name)) openWhy.delete(String(gone.name));
   if (worn) { const at = tops().indexOf(worn); tryOn = at < 0 ? '' : at + tryOn.slice(bar); save('sf.try', tryOn); }
   save('sf.charts', custom); relink(); refresh();
-  document.getElementById('cMsg').textContent = `Removed ${gone.name}.`;
+  sizeSay(`Removed ${gone.name}.`);
   // keyboard focus goes to the next added chart's Remove, or back to the top of the list
   const left = document.querySelectorAll('#results [data-del-chart]');
   (left[Math.min(+c, left.length - 1)] || document.getElementById('resultsTitle')).focus();
@@ -14241,7 +14776,8 @@ const applyProfile = function (d) {
   me = m; typed = w; fit = [-2, 0, 4].includes(d.fit) ? d.fit : 0;
   wearFrom = d.wearFrom === 'wardrobe' ? 'wardrobe' : 'typed';
   custom = added;
-  seeded = had; seedv = d.seedv === 2 ? 2 : 1;      // (a profile from before your wardrobe was built in is brought up to date as a browser's own is: see withPieces)
+  seeded = had; seedv = cleanSeedv(d.seedv);      // (a profile from before your wardrobe was built in is brought up to date as a browser's own is: see withPieces)
+  if (looks !== undefined) tried = cleanTried(d.tries);      // (and its pieces to try are given the ones that come with this page, where the file has not had them: see withTries)
   owned = Wardrobe.link(withPieces(pieces), charts()); syncStars(true); seedNew = false;
   if (typeof d.tryOn === 'string') tryOn = d.tryOn.slice(0, 40);
   if (BOTTOMS.includes(d.bottom)) bottomFit = d.bottom;
@@ -14255,12 +14791,12 @@ const applyProfile = function (d) {
   openWhy.clear(); document.getElementById('starMsg').textContent = STAR_HINT;
   save('sf.me', me); save('sf.wear', typed); save('sf.wearFrom', wearFrom); save('sf.fit', fit); save('sf.charts', custom); save('sf.owned', packOwned(owned)); save('sf.seeded', seeded); save('sf.seedv', seedv); save('sf.try', tryOn); save('sf.bottom', bottomFit); save('sf.flatOthers', flatOthers);
   rewear(); renderMeasures(); renderResults(); renderOwned();
-  if (looks !== undefined) { mountOutfit(looks.state); keepOutfit(outfitState); }      // the playground starts again from the file's looks (with a design where an older file had a pattern)
+  if (looks !== undefined) { mountOutfit(looks.state); keepOutfit(outfitState); save('sf.tries', tried); }      // the playground starts again from the file's looks (with a design where an older file had a pattern)
   else if (sides && playground) playground.view(views.outfit);
   return { photoLost, looksCut: looks ? looks.cut : 0 };
 };
 document.getElementById('exportBtn').addEventListener('click', () => {
-  const data = { app: 'size-finder', version: 5, saved: new Date().toISOString().slice(0, 10), me, fit, wear: typed, wearFrom, charts: custom, owned: packOwned(owned), seeded, seedv, tryOn, bottom: bottomFit, flatOthers, view: views, photo: cleanPhoto(load('sf.photo', null)), outfit: outfitState };
+  const data = { app: 'size-finder', version: 5, saved: new Date().toISOString().slice(0, 10), me, fit, wear: typed, wearFrom, charts: custom, owned: packOwned(owned), seeded, seedv, tries: tried, tryOn, bottom: bottomFit, flatOthers, view: views, photo: cleanPhoto(load('sf.photo', null)), outfit: outfitState };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
   a.download = 'size-profile.json';
@@ -14337,7 +14873,30 @@ const cutNearest = leg => {
   }
   return best;
 };
-const outfitWardrobe = () => owned.filter(o => Wardrobe.wearable(o) && OUTFIT_KINDS[o.slot] && OUTFIT_KINDS[o.slot].includes(o.kind)).map(o => {
+// A reversible piece (SIDES) is handed over once for each side, each under its own name ("Reversible vest, panelled side") and with an id of its own, so a look knows which
+// side it wears. A hoodie or a sweatshirt is worn alone or over a tee, so it is handed over twice, as a top and as a layer, under the one id: the playground knows a piece of
+// yours by where it is worn and its id together. One that goes on over the head says so as a layer (it does up with nothing), so it is never drawn open.
+const sideId = (o, design) => `${ownId(o)}~${String(design).split('-').pop()}`;
+const outfitWardrobe = () => {
+  const home = [], also = [];
+  owned.filter(o => Wardrobe.wearable(o) && OUTFIT_KINDS[o.slot] && OUTFIT_KINDS[o.slot].includes(o.kind)).forEach(o => {
+    const piece = outfitPiece(o), sides = Object.keys(SIDES).includes(o.id) && o.kind === 'vest' ? SIDES[o.id] : null, at = sides ? sides.findIndex(s => s[0] === o.design) : -1;
+    if (at < 0) home.push(piece);
+    else {
+      const flip = sides[1 - at], colors = [piece.colors[0]].concat(flip[2]), named = (p, words) => Object.assign(p, { name: `${piece.name.slice(0, 58 - words.length)}, ${words}` }, piece.short ? { short: `${piece.short.slice(0, 58 - words.length)}, ${words}` } : null);
+      const ids = sides.map((s, i) => i ? sideId(o, s[0]) : ownId(o));
+      const both = [named(Object.assign({}, piece, { id: ids[at] }), sides[at][1]), named(Object.assign({}, piece, { id: ids[1 - at], colors, color: colors[0], design: { id: flip[0], colors } }), flip[1])];
+      home.push(both[at], both[1 - at]);      // (listed in the order of SIDES whichever the row is)
+    }
+    if (o.kind === 'hoodie' && (o.slot === 'top' || o.slot === 'layer')) {
+      const over = o.slot === 'top', shape = Object.assign({}, piece.shape);
+      if (over && !shape.closure) shape.closure = 'none';
+      also.push(Object.assign({}, piece, { slot: over ? 'layer' : 'top' }, Object.keys(shape).length ? { shape } : null));
+    }
+  });
+  return home.concat(also);      // (each part of the outfit lists the pieces that are filed there first, then the ones that can also be worn there)
+};
+const outfitPiece = o => {
   const piece = Object.assign({ id: ownId(o), name: Wardrobe.nameOf(o).slice(0, 60), slot: o.slot, kind: o.kind, colors: o.colors.map(c => hex6(c)) }, lookOf(o));
   if (o.brand && o.item) piece.short = String(o.item).slice(0, 60);      // (under its picture in the grid of your pieces there is room for its own name, not its brand's as well)
   const shape = Wardrobe.shape(o.slot, o.shape) || {};
@@ -14365,7 +14924,7 @@ const outfitWardrobe = () => owned.filter(o => Wardrobe.wearable(o) && OUTFIT_KI
   }
   if (Object.keys(shape).length) piece.shape = shape;
   return piece;
-});
+};
 const outfitData = () => {
   const rows = owned.map(ownRow).filter(Boolean);
   return { body: { height: me.height, weight: me.weight, chest: me.chest, waist: me.waist, hip: me.hip, inseam: me.inseam }, fits: outfitFits(rows), wardrobe: outfitWardrobe() };
@@ -14443,6 +15002,7 @@ const cleanOutfit = (v, max) => {
     const w = cleanWorn(p.slot, p), out = { name: cutText(p.name, 60), slot: p.slot };
     for (const k of ['kind', 'color', 'fit', 'sole', 'chest', 'length', 'shoulder', 'sleeve', 'pattern', 'trim', 'design', 'color2', 'collarColor', 'long', 'shape']) if (k in w) out[k] = w[k];
     if (cutText(p.size, 12)) out.size = cutText(p.size, 12);      // the size on its label, where you gave one
+    if (cutText(p.short, 60)) out.short = cutText(p.short, 60);      // the few words under its picture, where it came with some
     return Object.assign(out, idOf(p));
   });
   const now = v.now && typeof v.now === 'object' ? v.now : {}, locks = now.locks && typeof now.locks === 'object' ? now.locks : {}, given = v.sizes && typeof v.sizes === 'object' ? v.sizes : {}, sizes = {};
@@ -14515,10 +15075,54 @@ const unclaim = state => {
   const each = look => {
     if (look && typeof look === 'object') for (const slot of OUTFIT_SLOTS) {
       const g = look[slot];
-      if (g && typeof g === 'object' && typeof g.ref === 'string' && g.ref.indexOf('own-') === 0 && !mine.has(g.ref)) { delete g.ref; delete g.name; n++; }
+      if (g && typeof g === 'object' && typeof g.ref === 'string' && g.ref.indexOf('own-') === 0 && !mine.has(g.ref.split('~')[0])) { delete g.ref; delete g.name; n++; }      // (one side of a reversible piece is "own-its-id~side")
     }
   };
   if (state && typeof state === 'object') { (Array.isArray(state.looks) ? state.looks : []).forEach(k => each(k && k.look)); each(state.now && state.now.look); }
+  return n;
+};
+// The pieces to try that come with this page (TRIES) are put into the playground's saved object, each once for a browser or a profile file: the ones it has not had go to
+// the end of its pieces to try, after any you added yourself. One that takes the place of a row still in your wardrobe (a row you changed, so it stayed) is not added.
+// A look that wears one of the rows that moved wears the piece to try from now on. The outfit that is on takes the piece's name and how it is made now (the beige trousers
+// lose the wide leg), which is the correction itself; so does a saved look whose piece is still exactly as the row gave it (its name, kind and colour, plain, with no leg of
+// its own), so that wearing the look again does not bring the wide leg back. A saved look's own name is never touched.
+// One of these pieces that has lost the few words under its picture while it is still called what it came as is given them back (the copy of this page from before
+// 14 Oct 2026 drops them when it is opened in the same browser).
+// -> the object given when there was nothing to do, otherwise a new one (the looks in it changed in place)
+const withTries = state => {
+  const st = state && typeof state === 'object' ? state : null, pieces = st && Array.isArray(st.pieces) ? st.pieces : [], fresh = TRIES.filter(t => !tried.includes(t.id));
+  const here = t => !(t.was && owned.some(o => o.id === t.was)), add = fresh.filter(t => here(t) && !pieces.some(p => p.id === t.id));
+  let moved = 0, mended = 0;
+  const next = pieces.map(p => { const t = p && typeof p === 'object' && !p.short ? TRIES.find(x => x.id === p.id && x.short && x.name === p.name) : null; if (!t) return p; mended++; return Object.assign({}, p, { short: t.short }); })
+    .concat(add.map(t => { const p = Object.assign({}, t); delete p.was; return p; }));
+  const asRow = (g, t) => { const w = MOVED[t.was]; return g.name === w.item && g.kind === w.kind && g.color === w.colors && (!w.fit || g.fit === w.fit) && !g.design && !g.shape; };
+  const each = (look, on) => {
+    if (look && typeof look === 'object') for (const slot of OUTFIT_SLOTS) {
+      const g = look[slot], t = g && typeof g === 'object' && typeof g.ref === 'string' ? TRIES.find(x => x.was && g.ref === 'own-' + x.was && x.slot === slot) : null;
+      if (!t || !here(t) || !next.some(p => p.id === t.id)) continue;
+      const same = asRow(g, t);
+      g.ref = t.id; moved++;
+      if (on || same) { g.name = t.name; if (t.fit) g.fit = t.fit; if (t.shape) g.shape = JSON.parse(JSON.stringify(t.shape)); }
+    }
+  };
+  if (st) { (Array.isArray(st.looks) ? st.looks : []).forEach(k => each(k && k.look, false)); each(st.now && st.now.look, true); }
+  if (!fresh.length && !moved && !mended) return state;
+  tried = tried.concat(fresh.map(t => t.id));
+  return Object.assign({ v: 1, looks: [], now: { look: null, locks: {} }, sizes: {} }, st, { pieces: next });
+};
+// One side of a reversible piece goes by "own-id~side" in a look. The copy of this page from before 14 Oct 2026 does not know such an id: opened in the same browser, it takes
+// the id and the name off the look (what is drawn stays as it was). They are put back here, for a piece in a look that has neither and is exactly that side of the piece as
+// the wardrobe has it now: the same kind, colour and design in the same colours. Returns how many that was.
+const reclaim = (state, wardrobe) => {
+  const sides = wardrobe.filter(p => String(p.id).indexOf('~') > 0 && p.design && Array.isArray(p.design.colors)), said = d => (Array.isArray(d.colors) ? d.colors : []).filter(Boolean).join();
+  let n = 0;
+  const each = look => {
+    if (look && typeof look === 'object') for (const p of sides) {
+      const g = look[p.slot];
+      if (g && typeof g === 'object' && g.ref == null && !g.name && g.kind === p.kind && g.color === p.color && g.design && typeof g.design === 'object' && g.design.id === p.design.id && said(g.design) === said(p.design)) { g.ref = p.id; g.name = p.name; n++; }
+    }
+  };
+  if (sides.length && state && typeof state === 'object') { (Array.isArray(state.looks) ? state.looks : []).forEach(k => each(k && k.look)); each(state.now && state.now.look); }
   return n;
 };
 const mountOutfit = saved => {
@@ -14527,8 +15131,10 @@ const mountOutfit = saved => {
   outfitState = saved || null;
   if (window.Outfit && el) {
     try {
-      const data = outfitData();
+      const data = outfitData(), given = withTries(outfitState);
+      if (given !== outfitState) { keepOutfit(given); save('sf.tries', tried); }
       if (outfitState && unclaim(outfitState)) keepOutfit(outfitState);
+      if (outfitState && reclaim(outfitState, data.wardrobe)) keepOutfit(outfitState);
       if (outfitState && hasOld(outfitState)) { const renewed = renewOutfit(outfitState, data); if (renewed !== outfitState) keepOutfit(renewed); }
       outfitSent = JSON.stringify(data);
       playground = Outfit.mount(el, Object.assign(data, { avatar: figureLib, figureEl: document.getElementById('outfitFigure'), saved: outfitState, onChange: keepOutfit, askText: askClaude }));
@@ -14614,17 +15220,22 @@ const checkAddLink = hash => {
   if (!got) return;
   const n = got.pieces.length, list = document.getElementById('addAskList'), yes = document.getElementById('addAskYes'), no = document.getElementById('addAskNo'), ok = n > 0 && !!playground && typeof playground.add === 'function';
   addWaiting = ok ? got.pieces : [];
-  document.getElementById('addAskT').textContent = !n ? 'This link could not be read' : n === 1 ? 'Add this piece?' : `Add these ${n} pieces?`;
+  // which of them you already have: among your pieces to try exactly as the link gives it, or in your wardrobe (the playground says). Those are put on, never added again.
+  const had = ok && typeof playground.has === 'function' ? playground.has(got.pieces) : [], old = had.filter(Boolean).length, all = n > 0 && old === n;
+  const where = all && had.every(h => h === 'own') ? 'in your wardrobe' : all && had.every(h => h === 'try') ? 'among your pieces to try' : 'in your wardrobe or among your pieces to try';
+  document.getElementById('addAskT').textContent = !n ? 'This link could not be read' : all ? (n === 1 ? 'You already have this piece' : 'You already have these pieces') : n === 1 ? 'Add this piece?' : `Add these ${n} pieces?`;
   document.getElementById('addAskNote').textContent = !n ? 'It should hold a piece to try, but nothing in it could be read. Nothing was added.'
     : !ok ? 'This link holds a piece to try, but the outfit part of this page is not running, so it cannot be added here.'
-    : `This link wants to add ${n === 1 ? 'it' : 'them'} to your pieces to try and put ${n === 1 ? 'it' : 'the first'} on your figure. Nothing is added unless you say so.` + (got.given > n ? ` (${got.given - n} more in the link could not be read.)` : '');
+    : all ? `${n === 1 ? 'It is' : 'They are'} already ${where}, so nothing is added. “Put it on” puts ${n === 1 ? 'it' : 'the first'} on your figure.` + (got.given > n ? ` (${got.given - n} more in the link could not be read.)` : '')
+    : `This link wants to add ${n === 1 ? 'it' : 'them'} to your pieces to try and put ${n === 1 ? 'it' : 'the first'} on your figure. Nothing is added unless you say so.` + (old ? ` (${old === 1 ? 'One of them you already have: it is' : `${old} of them you already have: they are`} not added again.)` : '') + (got.given > n ? ` (${got.given - n} more in the link could not be read.)` : '');
+  yes.textContent = all ? 'Put it on' : 'Add to pieces to try';
   list.textContent = '';
-  got.pieces.forEach(p => {
+  got.pieces.forEach((p, at) => {
     const li = document.createElement('li'), pic = document.createElement('span'), words = document.createElement('span'), name = document.createElement('span'), what = document.createElement('span');
     pic.className = 'ask-pic'; name.className = 'ask-name'; what.className = 'ask-what';
     const colour = window.Outfit && typeof Outfit.colourName === 'function' ? Outfit.colourName(p.color) : '', plain = `${colour ? colour + ' ' : ''}${kindName(p.slot, p.kind).toLowerCase()}`;
     name.textContent = p.name || plain.charAt(0).toUpperCase() + plain.slice(1);      // (text, whatever the link put in the name)
-    what.textContent = [p.name ? plain.charAt(0).toUpperCase() + plain.slice(1) : '', p.size ? `size ${p.size}` : '', p.chest ? `${p.chest} cm wide` : '', p.length ? `${p.length} long` : ''].filter(Boolean).join(', ');
+    what.textContent = [p.name ? plain.charAt(0).toUpperCase() + plain.slice(1) : '', p.size ? `size ${p.size}` : '', p.chest ? `${p.chest} cm wide` : '', p.length ? `${p.length} long` : '', had[at] === 'own' ? 'already in your wardrobe' : had[at] === 'try' ? 'already among your pieces to try' : ''].filter(Boolean).join(', ');
     try { if (figureCan('thumb')) Avatar.thumb(pic, Object.assign({ slot: p.slot, kind: p.kind, colors: [p.color], size: 56, detail: 2 }, p.fit ? { fit: p.fit } : null, p.long ? { long: true } : null)); } catch (e) { /* no picture: its words say what it is */ }
     if (!pic.firstChild) pic.style.cssText = `border-radius:10px;background:${p.color};border:1px solid var(--line)`;
     words.appendChild(name); words.appendChild(what); li.appendChild(pic); li.appendChild(words); list.appendChild(li);

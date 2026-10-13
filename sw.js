@@ -1,6 +1,6 @@
 // Size Finder's service worker. It keeps the page and its few files on the phone, so the page opens with no signal, and it fetches a newer copy in the
 // background whenever there is one, so the next visit has it. It handles this site's own files and nothing else. Nothing is sent anywhere.
-const VERSION = "12e199434e0e";      // changes whenever index.html does, which is how a phone learns there is a new one
+const VERSION = "1c6e4d58f4dd";      // changes whenever index.html does, which is how a phone learns there is a new one
 const CACHE = 'size-finder-' + VERSION;
 const FILES = ["./", "index.html", "manifest.webmanifest", "apple-touch-icon.png", "icon-192.png", "icon-512.png"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting())); });
